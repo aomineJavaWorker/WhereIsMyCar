@@ -13,6 +13,7 @@ public class GameObjectsScript : MonoBehaviour
     public Vector2 medicineCoord;
     [HideInInspector]
     public Vector2 schoolBussCoord;
+    // Velak pievienot vairak masinas un sakum koordinates
 
     public Canvas canvas;
     public AudioSource carSoundSource;
