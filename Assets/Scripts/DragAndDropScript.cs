@@ -39,7 +39,7 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
             canvasGroup.alpha = 0.6f;
             canvasGroup.blocksRaycasts = false;
             int lastIndex = transform.parent.childCount - 1;
-            int positionIndex = Mathf.Max(0, lastIndex);
+            int positionIndex = Mathf.Max(0, lastIndex - 1);
             transform.SetSiblingIndex(positionIndex);
 
             //Izstrdsim ScrennBounderis un tad vares taisit parvietosanu

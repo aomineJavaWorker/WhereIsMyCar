@@ -5,7 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - Garbage
-  - ambulance
+  - Schoolbus
+  - Ambulance
   layers:
   - Default
   - TransparentFX
