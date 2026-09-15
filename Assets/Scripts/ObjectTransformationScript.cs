@@ -72,5 +72,9 @@ public class ObjectTransfarmationScript : MonoBehaviour
                     GameObjectsScript.lastDragged.GetComponent<RectTransform>().localScale.y,  1f);
             }
         }
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            GameObjectsScript.lastDragged.GetComponent<RectTransform>().Rotate(0, 180, 0);
+        }
     }
 }
