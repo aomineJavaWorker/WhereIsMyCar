@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 public class GameObjectsScript : MonoBehaviour
 {
-    // Точки, на которых могут появляться места для машин
+    
     public RectTransform[] spawnPoints;
 
-    // Места, куда игрок должен поставить машины
+ 
     public RectTransform[] dropPlaces;
 
 
@@ -75,11 +75,8 @@ public class GameObjectsScript : MonoBehaviour
 
     void Awake()
     {
-        // Рандомно размещаем МЕСТА для машин
         SpawnDropPlacesRandomly();
-
-
-        // Запоминаем обычные стартовые позиции самих машин
+       
         garbageTruckCoord =
             garbageTruck.GetComponent<RectTransform>().localPosition;
 
@@ -134,8 +131,7 @@ public class GameObjectsScript : MonoBehaviour
         }
 
 
-        // Создаём копию SpawnPoint,
-        // чтобы одна точка не использовалась несколько раз
+        // Izveidojam kopiju prieks SpawnPoint, lai viens punkts neatkartojas vairak rezes
         List<RectTransform> availablePoints =
             new List<RectTransform>(spawnPoints);
 
@@ -149,7 +145,7 @@ public class GameObjectsScript : MonoBehaviour
             }
 
 
-            // Выбираем случайную свободную точку
+            // Izvelamies random vietu
             int randomIndex =
                 Random.Range(0, availablePoints.Count);
 
@@ -158,11 +154,11 @@ public class GameObjectsScript : MonoBehaviour
                 availablePoints[randomIndex];
 
 
-            // Перемещаем место для машины
+            // Parvietojam place
             dropPlace.position = randomPoint.position;
 
 
-            // Эта SpawnPoint больше недоступна
+       
             availablePoints.RemoveAt(randomIndex);
         }
     }
