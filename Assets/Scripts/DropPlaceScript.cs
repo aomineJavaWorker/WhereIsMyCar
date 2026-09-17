@@ -9,7 +9,7 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
     public GameObjectsScript gameObjectsScript;
 
 
-    void Awake()
+    void Start()
     {
         gameObjectsScript = Object.FindFirstObjectByType<GameObjectsScript>();
     }
@@ -135,7 +135,7 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
                     case "Eskavators":
                         gameObjectsScript.Eskavators.GetComponent<RectTransform>().localPosition = gameObjectsScript.EskavatorsCoord;
                         break;
-                    case "Traktors_dzeltens":
+                    case "Traktors_Dzeltens":
                         gameObjectsScript.Traktors_dzeltens.GetComponent<RectTransform>().localPosition = gameObjectsScript.Traktors_dzeltensCoord;
                         break;
                     case "Traktors_Zals":
