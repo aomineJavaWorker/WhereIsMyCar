@@ -60,7 +60,7 @@ public class FlyingObjectSpawnScript : MonoBehaviour
             plain.GetComponent<FlyingObjectControllerScript>();
 
         if (controller != null)
-            controller.speed = speed;
+            controller.speed = -speed;
     }
 
     // Update is called once per frame
