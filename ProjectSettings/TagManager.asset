@@ -16,6 +16,7 @@ TagManager:
   - Traktors_Dzeltens
   - Traktors_Zals
   - Ugunsdzeseji
+  - Bomb
   layers:
   - Default
   - TransparentFX
