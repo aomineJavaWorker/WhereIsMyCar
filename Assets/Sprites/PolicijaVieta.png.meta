@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      PolicijaVieta_0: 3126874556698342818
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

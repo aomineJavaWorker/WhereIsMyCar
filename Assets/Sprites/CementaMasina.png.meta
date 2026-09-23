@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      CementaMasina_0: -2283001300399380927
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

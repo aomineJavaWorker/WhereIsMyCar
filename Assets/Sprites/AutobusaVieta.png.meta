@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      AutobusaVieta_0: -6271150526424076387
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

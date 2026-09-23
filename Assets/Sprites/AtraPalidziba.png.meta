@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      AtraPalidziba_0: 9028461711715129261
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

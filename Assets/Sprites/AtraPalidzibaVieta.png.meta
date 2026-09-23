@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      AtraPalidzibaVieta_0: -4946968040367058546
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

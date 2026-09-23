@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class GameObjectsScript : MonoBehaviour
 {
@@ -75,6 +76,7 @@ public class GameObjectsScript : MonoBehaviour
 
     void Awake()
     {
+        ConfigureDropRaycaster();
         SpawnDropPlacesRandomly();
        
         garbageTruckCoord =
@@ -114,6 +116,13 @@ public class GameObjectsScript : MonoBehaviour
             Policija.GetComponent<RectTransform>().localPosition;
     }
 
+
+    private void ConfigureDropRaycaster()
+    {
+        // Y = 180 silhouettes must receive drops despite facing away from the camera.
+        if (canvas != null && canvas.TryGetComponent(out GraphicRaycaster raycaster))
+            raycaster.ignoreReversedGraphics = false;
+    }
 
     private void SpawnDropPlacesRandomly()
     {
@@ -156,6 +165,10 @@ public class GameObjectsScript : MonoBehaviour
 
             // Parvietojam place
             dropPlace.position = randomPoint.position;
+
+            // The array intentionally contains both places and draggable cars.
+            if (dropPlace.TryGetComponent(out DragAndDropScript car))
+                car.SaveStartPosition();
 
 
        

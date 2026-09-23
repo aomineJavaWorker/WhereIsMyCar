@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      EskavatorsVieta_0: -5661985900657282435
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

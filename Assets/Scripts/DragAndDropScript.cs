@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -7,7 +6,28 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     public GameObjectsScript gameObjectsScript;
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
+    private Vector3 startPosition;
+    private bool hasStartPosition;
+    private bool placedThisDrag;
     public ScreenBounderiesScript screenBounderiesScript;
+
+    public void SaveStartPosition()
+    {
+        // May be called by the spawner before this component's Awake.
+        rectTransform = GetComponent<RectTransform>();
+        startPosition = rectTransform.localPosition;
+        hasStartPosition = true;
+    }
+
+    public void ReturnToStart()
+    {
+        rectTransform.localPosition = startPosition;
+    }
+
+    public void ConfirmPlacement()
+    {
+        placedThisDrag = true;
+    }
 
     void Awake()
     {
@@ -36,6 +56,8 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
         if(Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
         {
             GameObjectsScript.isDragging = true;
+            placedThisDrag = false;
+            gameObjectsScript.inRightPlace = false;
             canvasGroup.alpha = 0.6f;
             canvasGroup.blocksRaycasts = false;
             int lastIndex = transform.parent.childCount - 1;
@@ -78,18 +100,21 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!Input.GetMouseButton(0))
+        if (eventData.button == PointerEventData.InputButton.Left)
         {
             GameObjectsScript.isDragging = false;
             Debug.Log("OnEndDrag called for " + gameObject.name);
             canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = true;
 
-            if (gameObjectsScript.inRightPlace)
+            if (placedThisDrag)
             {
                 canvasGroup.blocksRaycasts = false;
                 GameObjectsScript.lastDragged = null;
             }
+
+            // Only DropPlaceScript returns a car to spawn when its tag is wrong.
+            // Other unsuccessful drops keep the current position.
 
             gameObjectsScript.inRightPlace = false;
         }
@@ -100,12 +125,8 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        // All scene Awake callbacks, including the random spawn, have finished.
+        if (!hasStartPosition)
+            SaveStartPosition();
     }
 }
