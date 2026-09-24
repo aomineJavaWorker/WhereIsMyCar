@@ -30,6 +30,13 @@ public class GameManager : MonoBehaviour
     public Sprite yellowStar;
     public Sprite grayStar;
 
+    [Header("Result Music")]
+    public AudioSource resultAudioSource;
+    public AudioSource backgroundMusicSource;
+
+    public AudioClip winMusic;
+    public AudioClip loseMusic;
+
     private bool gameFinished = false;
 
 
@@ -163,6 +170,18 @@ public class GameManager : MonoBehaviour
             stars
         );
 
+        if (backgroundMusicSource != null)
+        {
+            backgroundMusicSource.Stop();
+        }
+
+        if (resultAudioSource != null && winMusic != null)
+        {
+            resultAudioSource.clip = winMusic;
+            resultAudioSource.loop = false;
+            resultAudioSource.Play();
+        }
+
         Time.timeScale = 0f;
     }
 
@@ -189,6 +208,13 @@ public class GameManager : MonoBehaviour
             "ZAUDĒJUMS! Destroyed vehicles: " +
             destroyedVehicles
         );
+
+        if (resultAudioSource != null && loseMusic != null)
+        {
+            resultAudioSource.clip = loseMusic;
+            resultAudioSource.loop = false;
+            resultAudioSource.Play();
+        }
 
         Time.timeScale = 0f;
     }
