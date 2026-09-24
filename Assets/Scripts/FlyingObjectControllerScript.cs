@@ -13,6 +13,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     private GameObjectsScript gameObjectsScript;
     private ScreenBounderiesScript screenBounderiesScript;
+    private GameManager gameManager;
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
 
@@ -43,6 +44,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
         gameObjectsScript = Object.FindFirstObjectByType<GameObjectsScript>();
         screenBounderiesScript =
             Object.FindFirstObjectByType<ScreenBounderiesScript>();
+
+        gameManager =
+        Object.FindFirstObjectByType<GameManager>();
 
         StartCoroutine(FadeIn());
     }
@@ -122,18 +126,35 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     IEnumerator ShrinkAndDestroy(GameObject obj, float duration)
     {
+        if (obj == null)
+            yield break;
+
         Vector3 originalScale = obj.transform.localScale;
-        Quaternion orginamRotation = obj.transform.rotation;
         float time = 0f;
-        while ( time < duration)
+
+        while (time < duration)
         {
+            if (obj == null)
+                yield break;
+
             time += Time.deltaTime;
-                obj.transform.localScale = Vector3.Lerp(originalScale, Vector3.zero, time / duration);
-            float angle = Mathf.Lerp(0f, 360f, time / duration);
-            obj.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+            obj.transform.localScale =
+                Vector3.Lerp(originalScale,Vector3.zero,time / duration);
+
+            float angle =
+                Mathf.Lerp(0f,360f,time / duration);
+
+            obj.transform.rotation =Quaternion.Euler(0f,0f,angle);
 
             yield return null;
         }
+
+        if (gameManager != null)
+        {
+            gameManager.VehicleDestroyed();
+        }
+
         Destroy(obj);
     }
 

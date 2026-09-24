@@ -5,13 +5,20 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
 {
     private const float SizeTolerance = 0.08f;
     private const float AngleTolerance = 7f;
+    private GameManager gameManager;
 
     public GameObjectsScript gameObjectsScript;
 
     void Start()
     {
         if (gameObjectsScript == null)
-            gameObjectsScript = FindFirstObjectByType<GameObjectsScript>();
+        {
+            gameObjectsScript =
+                FindFirstObjectByType<GameObjectsScript>();
+        }
+
+        gameManager =
+            FindFirstObjectByType<GameManager>();
     }
 
     public void OnDrop(PointerEventData eventData)
@@ -44,12 +51,20 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
             return;
 
         gameObjectsScript.inRightPlace = true;
-        // Cars and places have different parents in CityScene.
+
         car.position = place.position;
         car.localScale = place.localScale;
         car.localRotation = place.localRotation;
-        draggedCar.ConfirmPlacement();
+
+        bool firstPlacement =
+            draggedCar.ConfirmPlacement();
+
         PlayCorrectSound(draggedCar.tag);
+
+        if (firstPlacement && gameManager != null)
+        {
+            gameManager.VehiclePlaced();
+        }
     }
 
     private static bool IsSameVisualDirection(RectTransform car, RectTransform place)

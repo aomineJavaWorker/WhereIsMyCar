@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,10 +16,10 @@ public class GameManager : MonoBehaviour
     public TMP_Text timerText;
 
     private float elapsedTime = 0f;
-    private bool gameFinished = false;
 
-    [Header("Win Panel")]
+    [Header("Result UI")]
     public GameObject winPanel;
+    public TMP_Text resultTitle;
     public TMP_Text winTimeText;
 
     [Header("Stars")]
@@ -27,8 +27,10 @@ public class GameManager : MonoBehaviour
     public Image star2;
     public Image star3;
 
-    public Color activeStarColor = Color.yellow;
-    public Color inactiveStarColor = Color.gray;
+    public Sprite yellowStar;
+    public Sprite grayStar;
+
+    private bool gameFinished = false;
 
 
     private void Start()
@@ -41,9 +43,9 @@ public class GameManager : MonoBehaviour
         gameFinished = false;
 
         if (winPanel != null)
-        {
             winPanel.SetActive(false);
-        }
+
+        SetStars(0);
 
         UpdateTimerText();
     }
@@ -65,9 +67,12 @@ public class GameManager : MonoBehaviour
         if (timerText == null)
             return;
 
-        TimeSpan time = TimeSpan.FromSeconds(elapsedTime);
+        TimeSpan time =
+            TimeSpan.FromSeconds(elapsedTime);
 
-        timerText.text = time.ToString(@"hh\:mm\:ss");
+        // На Izkartne показываем только время
+        timerText.text =
+            time.ToString(@"hh\:mm\:ss");
     }
 
 
@@ -79,9 +84,10 @@ public class GameManager : MonoBehaviour
         placedVehicles++;
 
         Debug.Log(
-            "Placed: " + placedVehicles +
-            " / Required: " +
-            (totalVehicles - destroyedVehicles)
+            "Placed: " +
+            placedVehicles +
+            " / " +
+            GetRequiredVehicles()
         );
 
         CheckWin();
@@ -96,18 +102,31 @@ public class GameManager : MonoBehaviour
         destroyedVehicles++;
 
         Debug.Log(
-            "Destroyed: " + destroyedVehicles +
-            " / Total: " + totalVehicles
+            "Destroyed vehicles: " +
+            destroyedVehicles
         );
 
+        // Четвёртая разбитая машина = поражение
+        if (destroyedVehicles >= 4)
+        {
+            LoseGame();
+            return;
+        }
+
         CheckWin();
+    }
+
+
+    private int GetRequiredVehicles()
+    {
+        return totalVehicles - destroyedVehicles;
     }
 
 
     private void CheckWin()
     {
         int requiredVehicles =
-            totalVehicles - destroyedVehicles;
+            GetRequiredVehicles();
 
         if (placedVehicles >= requiredVehicles)
         {
@@ -118,31 +137,57 @@ public class GameManager : MonoBehaviour
 
     private void WinGame()
     {
+        if (gameFinished)
+            return;
+
         gameFinished = true;
-
-        if (winPanel != null)
-        {
-            winPanel.SetActive(true);
-        }
-
-        if (winTimeText != null)
-        {
-            TimeSpan finalTime =
-                TimeSpan.FromSeconds(elapsedTime);
-
-            winTimeText.text =
-                finalTime.ToString(@"hh\:mm\:ss");
-        }
 
         int stars = CalculateStars();
 
-        ShowStars(stars);
+        if (resultTitle != null)
+            resultTitle.text = "UZVARA!";
+
+        SetFinalTime();
+
+        SetStars(stars);
+
+        if (winPanel != null)
+            winPanel.SetActive(true);
 
         Debug.Log(
             "UZVARA! Time: " +
             elapsedTime +
-            " Stars: " +
+            " | Destroyed: " +
+            destroyedVehicles +
+            " | Stars: " +
             stars
+        );
+
+        Time.timeScale = 0f;
+    }
+
+
+    private void LoseGame()
+    {
+        if (gameFinished)
+            return;
+
+        gameFinished = true;
+
+        if (resultTitle != null)
+            resultTitle.text = "ZAUDĒJUMS!";
+
+        SetFinalTime();
+
+        // При поражении всегда 0 звёзд
+        SetStars(0);
+
+        if (winPanel != null)
+            winPanel.SetActive(true);
+
+        Debug.Log(
+            "ZAUDĒJUMS! Destroyed vehicles: " +
+            destroyedVehicles
         );
 
         Time.timeScale = 0f;
@@ -151,49 +196,85 @@ public class GameManager : MonoBehaviour
 
     private int CalculateStars()
     {
-        if (elapsedTime <= 60f)
+        int starsByTime;
+        int starsByDamage;
+
+        // Ограничение по времени
+        if (elapsedTime < 120f)
         {
-            return 3;
+            starsByTime = 3;
+        }
+        else if (elapsedTime < 180f)
+        {
+            starsByTime = 2;
+        }
+        else
+        {
+            starsByTime = 1;
         }
 
-        if (elapsedTime <= 120f)
+
+        // Ограничение по разбитым машинам
+        if (destroyedVehicles == 0)
         {
-            return 2;
+            starsByDamage = 3;
+        }
+        else if (destroyedVehicles <= 2)
+        {
+            starsByDamage = 2;
+        }
+        else
+        {
+            // 3 разбитые машины
+            starsByDamage = 1;
         }
 
-        if (elapsedTime <= 180f)
-        {
-            return 1;
-        }
 
-        return 0;
+        // Берём худший результат
+        return Mathf.Min(
+            starsByTime,
+            starsByDamage
+        );
     }
 
 
-    private void ShowStars(int stars)
+    private void SetFinalTime()
+    {
+        if (winTimeText == null)
+            return;
+
+        TimeSpan finalTime =
+            TimeSpan.FromSeconds(elapsedTime);
+
+        winTimeText.text =
+            finalTime.ToString(@"hh\:mm\:ss");
+    }
+
+
+    private void SetStars(int stars)
     {
         if (star1 != null)
         {
-            star1.color =
+            star1.sprite =
                 stars >= 1
-                ? activeStarColor
-                : inactiveStarColor;
+                    ? yellowStar
+                    : grayStar;
         }
 
         if (star2 != null)
         {
-            star2.color =
+            star2.sprite =
                 stars >= 2
-                ? activeStarColor
-                : inactiveStarColor;
+                    ? yellowStar
+                    : grayStar;
         }
 
         if (star3 != null)
         {
-            star3.color =
+            star3.sprite =
                 stars >= 3
-                ? activeStarColor
-                : inactiveStarColor;
+                    ? yellowStar
+                    : grayStar;
         }
     }
 

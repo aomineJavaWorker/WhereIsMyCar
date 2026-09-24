@@ -9,6 +9,8 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     private Vector3 startPosition;
     private bool hasStartPosition;
     private bool placedThisDrag;
+    [HideInInspector]
+    public bool isPlaced = false;
     public ScreenBounderiesScript screenBounderiesScript;
 
     public void SaveStartPosition()
@@ -24,9 +26,15 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
         rectTransform.localPosition = startPosition;
     }
 
-    public void ConfirmPlacement()
+    public bool ConfirmPlacement()
     {
+        if (isPlaced)
+            return false;
+
+        isPlaced = true;
         placedThisDrag = true;
+
+        return true;
     }
 
     void Awake()
@@ -45,6 +53,8 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     }
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (isPlaced)
+            return;
         if (Input.GetMouseButtonDown(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
         {
             Debug.Log("Left mouse button clicked on " + gameObject.name);
@@ -53,7 +63,9 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if(Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
+        if (isPlaced)
+            return;
+        if (Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
         {
             GameObjectsScript.isDragging = true;
             placedThisDrag = false;
@@ -78,11 +90,16 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
                     screenBounderiesScript.screenPoint.z));
             GameObjectsScript.lastDragged = eventData.pointerDrag;
         }
+
         
     }
 
+
     public void OnDrag(PointerEventData eventData)
     {
+        if (isPlaced)
+            return;
+
         if (Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
         {
             Vector3 cursScreenPoint =
