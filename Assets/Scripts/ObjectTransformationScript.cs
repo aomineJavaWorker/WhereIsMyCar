@@ -16,9 +16,9 @@ public class ObjectTransformationScript : MonoBehaviour
 
         RectTransform car = GameObjectsScript.lastDragged.GetComponent<RectTransform>();
         if (Input.GetKey(KeyCode.Z))
-            car.Rotate(0, 0, Time.deltaTime * 12f);
+            car.Rotate(0, 0, Time.deltaTime * 24f);
         if (Input.GetKey(KeyCode.X))
-            car.Rotate(0, 0, -Time.deltaTime * 12f);
+            car.Rotate(0, 0, -Time.deltaTime * 24f);
 
         Vector3 scale = car.localScale;
         if (Input.GetKey(KeyCode.UpArrow))

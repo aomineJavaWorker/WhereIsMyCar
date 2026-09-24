@@ -166,6 +166,11 @@ public class GameObjectsScript : MonoBehaviour
             // Parvietojam place
             dropPlace.position = randomPoint.position;
 
+            // Nejaušs pagrieziens: 0, 90, 180 vai 270 grādi
+            float randomAngle = Random.Range(0, 4) * 90f;
+
+            dropPlace.Rotate(0f, 0f, randomAngle);
+
             // The array intentionally contains both places and draggable cars.
             if (dropPlace.TryGetComponent(out DragAndDropScript car))
                 car.SaveStartPosition();
