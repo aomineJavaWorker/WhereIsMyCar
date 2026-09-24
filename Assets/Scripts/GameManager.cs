@@ -30,13 +30,10 @@ public class GameManager : MonoBehaviour
     public Sprite yellowStar;
     public Sprite grayStar;
 
-    [Header("Result Music")]
-    public AudioSource resultAudioSource;
-    public AudioSource backgroundMusicSource;
 
     public AudioClip winMusic;
     public AudioClip loseMusic;
-
+    private AudioSource backgroundMusicSource;
     private bool gameFinished = false;
 
 
@@ -53,10 +50,34 @@ public class GameManager : MonoBehaviour
             winPanel.SetActive(false);
 
         SetStars(0);
-
         UpdateTimerText();
+
+        GameObject backgroundMusic =
+            GameObject.Find("BackgroundMusic");
+
+        if (backgroundMusic != null)
+        {
+            backgroundMusicSource =
+                backgroundMusic.GetComponent<AudioSource>();
+        }
+        else
+        {
+            Debug.LogError("BackgroundMusic object not found!");
+        }
     }
 
+    private void PlayResultSound(AudioClip clip)
+    {
+        if (backgroundMusicSource == null || clip == null)
+            return;
+
+        backgroundMusicSource.Stop();
+
+        backgroundMusicSource.clip = clip;
+        backgroundMusicSource.loop = false;
+
+        backgroundMusicSource.Play();
+    }
 
     private void Update()
     {
@@ -175,13 +196,7 @@ public class GameManager : MonoBehaviour
             backgroundMusicSource.Stop();
         }
 
-        if (resultAudioSource != null && winMusic != null)
-        {
-            resultAudioSource.clip = winMusic;
-            resultAudioSource.loop = false;
-            resultAudioSource.Play();
-        }
-
+        PlayResultSound(winMusic);
         Time.timeScale = 0f;
     }
 
@@ -209,12 +224,7 @@ public class GameManager : MonoBehaviour
             destroyedVehicles
         );
 
-        if (resultAudioSource != null && loseMusic != null)
-        {
-            resultAudioSource.clip = loseMusic;
-            resultAudioSource.loop = false;
-            resultAudioSource.Play();
-        }
+        PlayResultSound(loseMusic);
 
         Time.timeScale = 0f;
     }
