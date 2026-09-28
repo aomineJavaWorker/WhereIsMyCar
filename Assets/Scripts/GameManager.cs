@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     public Image star2;
     public Image star3;
 
+    [Header("Lives")]
+    public Image[] hearts;
+
     public Sprite yellowStar;
     public Sprite grayStar;
 
@@ -45,6 +48,7 @@ public class GameManager : MonoBehaviour
         placedVehicles = 0;
         destroyedVehicles = 0;
         gameFinished = false;
+        UpdateHearts();
 
         if (winPanel != null)
             winPanel.SetActive(false);
@@ -128,6 +132,8 @@ public class GameManager : MonoBehaviour
             return;
 
         destroyedVehicles++;
+
+        UpdateHearts();
 
         Debug.Log(
             "Destroyed vehicles: " +
@@ -311,6 +317,16 @@ public class GameManager : MonoBehaviour
                 stars >= 3
                     ? yellowStar
                     : grayStar;
+        }
+    }
+
+    private void UpdateHearts()
+    {
+        int remainingLives = 4 - destroyedVehicles;
+
+        for (int i = 0; i < hearts.Length; i++)
+        {
+            hearts[i].gameObject.SetActive(i < remainingLives);
         }
     }
 
