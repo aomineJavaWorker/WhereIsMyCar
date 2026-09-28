@@ -205,7 +205,6 @@ GameObject:
   - component: {fileID: 160989587}
   - component: {fileID: 160989590}
   - component: {fileID: 160989589}
-  - component: {fileID: 160989588}
   - component: {fileID: 160989592}
   m_Layer: 5
   m_Name: Robber
@@ -233,21 +232,6 @@ RectTransform:
   m_AnchoredPosition: {x: 1139, y: -426}
   m_SizeDelta: {x: 250.55, y: 118.7312}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &160989588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 160989586}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b22e15d333c10a742bd27e85c6ce7d2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 500
-  leftBorder: -1110
-  rightSpawn: 1100
 --- !u!114 &160989589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1656,7 +1640,6 @@ GameObject:
   - component: {fileID: 2088299912}
   - component: {fileID: 2088299914}
   - component: {fileID: 2088299913}
-  - component: {fileID: 2088299915}
   - component: {fileID: 2088299916}
   m_Layer: 5
   m_Name: Police
@@ -1722,21 +1705,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2088299911}
   m_CullTransparentMesh: 1
---- !u!114 &2088299915
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2088299911}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b22e15d333c10a742bd27e85c6ce7d2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 450
-  leftBorder: -980
-  rightSpawn: 900
 --- !u!95 &2088299916
 Animator:
   serializedVersion: 7
