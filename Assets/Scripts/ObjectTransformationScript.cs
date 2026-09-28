@@ -16,19 +16,19 @@ public class ObjectTransformationScript : MonoBehaviour
 
         RectTransform car = GameObjectsScript.lastDragged.GetComponent<RectTransform>();
         if (Input.GetKey(KeyCode.Z))
-            car.Rotate(0, 0, Time.deltaTime * 12f);
+            car.Rotate(0, 0, Time.deltaTime * 24f);
         if (Input.GetKey(KeyCode.X))
-            car.Rotate(0, 0, -Time.deltaTime * 12f);
+            car.Rotate(0, 0, -Time.deltaTime * 24f);
 
         Vector3 scale = car.localScale;
         if (Input.GetKey(KeyCode.UpArrow))
-            scale.y = ResizeSignedScale(scale.y, 0.001f);
+            scale.y = ResizeSignedScale(scale.y, 0.005f);
         if (Input.GetKey(KeyCode.DownArrow))
-            scale.y = ResizeSignedScale(scale.y, -0.001f);
+            scale.y = ResizeSignedScale(scale.y, -0.005f);
         if (Input.GetKey(KeyCode.LeftArrow))
-            scale.x = ResizeSignedScale(scale.x, -0.001f);
+            scale.x = ResizeSignedScale(scale.x, -0.005f);
         if (Input.GetKey(KeyCode.RightArrow))
-            scale.x = ResizeSignedScale(scale.x, 0.001f);
+            scale.x = ResizeSignedScale(scale.x, 0.005f);
         if (Input.GetKeyDown(KeyCode.Space))
             scale.x = -scale.x;
 
