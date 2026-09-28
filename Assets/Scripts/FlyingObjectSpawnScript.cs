@@ -3,6 +3,7 @@ using UnityEngine;
 public class FlyingObjectSpawnScript : MonoBehaviour
 {
     ScreenBounderiesScript screenBoundariesScript;
+    private GameManager gameManager;
     [Header("Cloud Prefabs")]
     public GameObject[] cloudPrefabs;
     [Header("Plain Prefabs")]
@@ -24,6 +25,7 @@ public class FlyingObjectSpawnScript : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        gameManager = FindFirstObjectByType<GameManager>();
         screenBoundariesScript = Object.FindFirstObjectByType<ScreenBounderiesScript>();
         minY = screenBoundariesScript.minY;
         maxY = screenBoundariesScript.maxY;
@@ -33,6 +35,7 @@ public class FlyingObjectSpawnScript : MonoBehaviour
 
     void SpawnCloud()
     {
+        if (gameManager != null && gameManager.GameEnded) return;
         if (cloudPrefabs.Length == 0) return;
         GameObject prefab = cloudPrefabs[Random.Range(0, cloudPrefabs.Length)];
         float y = Random.Range(minY, maxY);
@@ -49,6 +52,7 @@ public class FlyingObjectSpawnScript : MonoBehaviour
 
     void SpawnPlain()
     {
+        if (gameManager != null && gameManager.GameEnded) return;
         if (plainPrefabs.Length == 0) return;
         GameObject prefab = plainPrefabs[Random.Range(0, plainPrefabs.Length)];
         float y = Random.Range(minY, maxY);

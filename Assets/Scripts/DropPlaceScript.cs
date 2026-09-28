@@ -23,6 +23,9 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
 
     public void OnDrop(PointerEventData eventData)
     {
+        if (gameManager != null && gameManager.GameEnded)
+            return;
+
         if (eventData.pointerDrag == null ||
             !eventData.pointerDrag.TryGetComponent(out DragAndDropScript draggedCar))
             return;
@@ -47,7 +50,10 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
             car.TransformVector(Vector3.up),
             place.TransformVector(Vector3.up)) <= AngleTolerance;
 
-        if (!sizeCorrect || !rotationCorrect || !IsSameVisualDirection(car, place))
+        // Spawn and Space both encode mirroring in the sign of localScale.x.
+        bool flipCorrect = (car.localScale.x < 0f) == (place.localScale.x < 0f);
+
+        if (!sizeCorrect || !rotationCorrect || !flipCorrect || !IsSameVisualDirection(car, place))
             return;
 
         gameObjectsScript.inRightPlace = true;

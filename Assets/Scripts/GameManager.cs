@@ -38,6 +38,7 @@ public class GameManager : MonoBehaviour
     public AudioClip loseMusic;
     private AudioSource backgroundMusicSource;
     private bool gameFinished = false;
+    public bool GameEnded => gameFinished;
 
 
     private void Start()
@@ -48,6 +49,8 @@ public class GameManager : MonoBehaviour
         placedVehicles = 0;
         destroyedVehicles = 0;
         gameFinished = false;
+        GameObjectsScript.isDragging = false;
+        GameObjectsScript.lastDragged = null;
         UpdateHearts();
 
         if (winPanel != null)
@@ -159,6 +162,9 @@ public class GameManager : MonoBehaviour
 
     private void CheckWin()
     {
+        if (gameFinished)
+            return;
+
         int requiredVehicles =
             GetRequiredVehicles();
 
@@ -175,6 +181,7 @@ public class GameManager : MonoBehaviour
             return;
 
         gameFinished = true;
+        StopInteraction();
 
         int stars = CalculateStars();
 
@@ -185,8 +192,7 @@ public class GameManager : MonoBehaviour
 
         SetStars(stars);
 
-        if (winPanel != null)
-            winPanel.SetActive(true);
+        ShowResultPanel();
 
         Debug.Log(
             "UZVARA! Time: " +
@@ -213,6 +219,7 @@ public class GameManager : MonoBehaviour
             return;
 
         gameFinished = true;
+        StopInteraction();
 
         if (resultTitle != null)
             resultTitle.text = "ZAUDĒJUMS!";
@@ -222,8 +229,7 @@ public class GameManager : MonoBehaviour
         // При поражении всегда 0 звёзд
         SetStars(0);
 
-        if (winPanel != null)
-            winPanel.SetActive(true);
+        ShowResultPanel();
 
         Debug.Log(
             "ZAUDĒJUMS! Destroyed vehicles: " +
@@ -235,6 +241,21 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
+
+    private void StopInteraction()
+    {
+        GameObjectsScript.isDragging = false;
+        GameObjectsScript.lastDragged = null;
+    }
+
+    private void ShowResultPanel()
+    {
+        if (winPanel == null)
+            return;
+
+        winPanel.transform.SetAsLastSibling();
+        winPanel.SetActive(true);
+    }
 
     private int CalculateStars()
     {

@@ -5,6 +5,8 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
 {
     public GameObjectsScript gameObjectsScript;
     private CanvasGroup canvasGroup;
+    private GameManager gameManager;
+    private bool GameEnded => gameManager != null && gameManager.GameEnded;
     private RectTransform rectTransform;
     private Vector3 startPosition;
     private bool hasStartPosition;
@@ -23,12 +25,14 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
 
     public void ReturnToStart()
     {
+        if (GameEnded)
+            return;
         rectTransform.localPosition = startPosition;
     }
 
     public bool ConfirmPlacement()
     {
-        if (isPlaced)
+        if (GameEnded || isPlaced)
             return false;
 
         isPlaced = true;
@@ -39,6 +43,7 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
 
     void Awake()
     {
+        gameManager = FindFirstObjectByType<GameManager>();
         canvasGroup = GetComponent<CanvasGroup>();
 
         if (canvasGroup == null)
@@ -53,7 +58,7 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     }
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (isPlaced)
+        if (GameEnded || isPlaced)
             return;
         if (Input.GetMouseButtonDown(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
         {
@@ -63,7 +68,7 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (isPlaced)
+        if (GameEnded || isPlaced)
             return;
         if (Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
         {
@@ -97,7 +102,7 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (isPlaced)
+        if (GameEnded || isPlaced)
             return;
 
         if (Input.GetMouseButton(0) && !Input.GetMouseButton(1) && !Input.GetMouseButton(2))
@@ -117,6 +122,13 @@ public class DragAndDropScript : MonoBehaviour, IPointerDownHandler, IBeginDragH
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (GameEnded)
+        {
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = !isPlaced;
+            return;
+        }
+
         if (eventData.button == PointerEventData.InputButton.Left)
         {
             GameObjectsScript.isDragging = false;

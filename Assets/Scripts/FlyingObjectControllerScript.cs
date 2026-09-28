@@ -14,6 +14,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
     private GameObjectsScript gameObjectsScript;
     private ScreenBounderiesScript screenBounderiesScript;
     private GameManager gameManager;
+    private bool GameEnded => gameManager != null && gameManager.GameEnded;
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
 
@@ -57,6 +58,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
         while (time < fadeDuration)
         {
+            if (GameEnded)
+                yield break;
+
             time += Time.deltaTime;
 
             canvasGroup.alpha =
@@ -70,6 +74,12 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     void Update()
     {
+        if (GameEnded)
+        {
+            StopAllCoroutines();
+            return;
+        }
+
         float waveOffset =
             Mathf.Sin(Time.time * waveFrequency) * waveAmplitude;
 
@@ -106,7 +116,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
             TriggerExplosion();
         }
-        if (GameObjectsScript.isDragging && !isFadingOut && RectTransformUtility.RectangleContainsScreenPoint(
+        if (!GameEnded && GameObjectsScript.isDragging && !isFadingOut && RectTransformUtility.RectangleContainsScreenPoint(
                 rectTransform, Input.mousePosition, Camera.main))
                 {
             Debug.Log("The cursor colilided with a flying object");
@@ -126,7 +136,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     IEnumerator ShrinkAndDestroy(GameObject obj, float duration)
     {
-        if (obj == null)
+        if (GameEnded || obj == null)
             yield break;
 
         Vector3 originalScale = obj.transform.localScale;
@@ -134,7 +144,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
         while (time < duration)
         {
-            if (obj == null)
+            if (GameEnded || obj == null)
                 yield break;
 
             time += Time.deltaTime;
@@ -150,6 +160,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
             yield return null;
         }
 
+        if (GameEnded || obj == null)
+            yield break;
+
         if (gameManager != null)
         {
             gameManager.VehicleDestroyed();
@@ -160,9 +173,12 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     public void TriggerExplosion()
     {
+        if (GameEnded || isExploading)
+            return;
+
         isExploading = true;
 
-        if (gameObjectsScript.carSoundSource != null &&
+        if (gameObjectsScript != null && gameObjectsScript.carSoundSource != null &&
             gameObjectsScript.sounds != null &&
             gameObjectsScript.sounds.Length > 14)
         {
@@ -192,6 +208,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
     {
         yield return new WaitForSeconds(seconds);
 
+        if (GameEnded)
+            yield break;
+
         if (image != null)
         {
             image.color = originalColor;
@@ -208,6 +227,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
         while (elapsed < duration)
         {
+            if (GameEnded)
+                yield break;
+
             rectTransform.anchoredPosition =
                 originalPos + Random.insideUnitCircle * intensity;
 
@@ -216,11 +238,15 @@ public class FlyingObjectControllerScript : MonoBehaviour
             yield return null;
         }
 
-        rectTransform.anchoredPosition = originalPos;
+        if (!GameEnded)
+            rectTransform.anchoredPosition = originalPos;
     }
 
     IEnumerator WaitBeforeExplode()
     {
+        if (GameEnded)
+            yield break;
+
         float radius = 0f;
 
         if (TryGetComponent<CircleCollider2D>(
@@ -234,6 +260,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
+        if (GameEnded)
+            yield break;
+
         ExplodeAndDestroyNearbyObjects(radius);
 
         Destroy(gameObject);
@@ -241,6 +270,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     void ExplodeAndDestroyNearbyObjects(float radius)
     {
+        if (GameEnded)
+            return;
+
         Collider2D[] hits =
             Physics2D.OverlapCircleAll(
                 transform.position,
@@ -249,6 +281,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
         foreach (Collider2D item in hits)
         {
+            if (GameEnded)
+                return;
+
             if (item != null &&
                 item.gameObject != gameObject)
             {
@@ -266,6 +301,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     public void StartAndDestroy(Color color)
     {
+        if (GameEnded)
+            return;
+
         if (!isFadingOut)
         {
             isFadingOut = true;
@@ -279,7 +317,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
             StartCoroutine(Vibrate());
             StartCoroutine(FadeOutAndDestroy());
 
-            if (gameObjectsScript.carSoundSource != null &&
+            if (gameObjectsScript != null && gameObjectsScript.carSoundSource != null &&
                 gameObjectsScript.sounds != null &&
                 gameObjectsScript.sounds.Length > 14)
             {
@@ -292,11 +330,17 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     IEnumerator FadeOutAndDestroy()
     {
+        if (GameEnded)
+            yield break;
+
         float time = 0f;
         float startAlpha = canvasGroup.alpha;
 
         while (time < fadeDuration)
         {
+            if (GameEnded)
+                yield break;
+
             time += Time.deltaTime;
 
             canvasGroup.alpha =
@@ -308,6 +352,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
             yield return null;
         }
+
+        if (GameEnded)
+            yield break;
 
         canvasGroup.alpha = 0f;
 

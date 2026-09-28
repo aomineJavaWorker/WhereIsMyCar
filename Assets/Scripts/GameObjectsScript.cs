@@ -169,7 +169,9 @@ public class GameObjectsScript : MonoBehaviour
             // Nejaušs pagrieziens: 0, 90, 180 vai 270 grādi
             float randomAngle = Random.Range(0, 4) * 90f;
 
-            dropPlace.Rotate(0f, 0f, randomAngle);
+            // Use one mirror representation (signed X), including legacy Y=180 places.
+            dropPlace.localRotation = Quaternion.Euler(0f, 0f, randomAngle);
+            SetFlip(dropPlace, Random.value > 0.5f);
 
             // The array intentionally contains both places and draggable cars.
             if (dropPlace.TryGetComponent(out DragAndDropScript car))
@@ -178,6 +180,40 @@ public class GameObjectsScript : MonoBehaviour
 
        
             availablePoints.RemoveAt(randomIndex);
+        }
+
+        EnsureFlipChallenge();
+    }
+
+    private static void SetFlip(RectTransform target, bool flipped)
+    {
+        Vector3 scale = target.localScale;
+        scale.x = flipped ? -Mathf.Abs(scale.x) : Mathf.Abs(scale.x);
+        target.localScale = scale;
+    }
+
+    private void EnsureFlipChallenge()
+    {
+        // At least one random car must require Space, even if all random flips match.
+        List<RectTransform> cars = new List<RectTransform>();
+        foreach (RectTransform item in dropPlaces)
+        {
+            if (item != null && item.TryGetComponent<DragAndDropScript>(out _))
+                cars.Add(item);
+        }
+
+        if (cars.Count == 0)
+            return;
+
+        RectTransform car = cars[Random.Range(0, cars.Count)];
+        foreach (RectTransform place in dropPlaces)
+        {
+            if (place != null && place.TryGetComponent<DropPlaceScript>(out _) &&
+                place.CompareTag(car.tag))
+            {
+                SetFlip(car, place.localScale.x > 0f);
+                return;
+            }
         }
     }
 }
