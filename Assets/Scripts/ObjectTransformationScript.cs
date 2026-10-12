@@ -2,88 +2,101 @@ using UnityEngine;
 
 public class ObjectTransformationScript : MonoBehaviour
 {
+    // Keep both the original reference and Inspector settings.
     public GameObjectsScript gameObjectScript;
     private GameManager gameManager;
     public float rotationSpeed = 90f;
     public float scaleSpeed = 0.5f;
-    private bool rotateCW, rotateCCW; scaleUpY, scaleDownY, scaleUpX, scaleDownX;
+
+    private bool rotateCW, rotateCCW;
+    private bool scaleUpY, scaleDownY, scaleUpX, scaleDownX;
     public static bool isTransforming = false;
 
-
-    void Awake()
+    private void Awake()
     {
         gameManager = FindFirstObjectByType<GameManager>();
-        if (GameObjectsScript.lastDragged == null)
-        {
-            return;
-        }
-        RectTransform rc = GameObjectsScript.lastDragged.GetComponent<RectTransform>();
-
-        if (rotateCW)
-        {
-            rc.Rotate(0, 0, -rotationSpeed * Time.deltaTime);
-        }
-        if (rotateCCW)
-        {
-            rc.Rotate(0, 0, rotationSpeed * Time.deltaTime);
-        }
-        if (scaleUpY && rc.localScale.y < 0.9f)
-        {
-            rc.localScale += new Vector3(0, scaleSpeed * Time.deltaTime, 0);
-        }
-        if (scaleDownY && rc.localScale.y > 0.3f)
-        {
-            rc.localScale -= new Vector3(0, scaleSpeed * Time.deltaTime, 0);
-        }
-        if (scaleUpX && rc.localScale.x < 0.9f)
-        {
-            rc.localScale += new Vector3(scaleSpeed * Time.deltaTime, 0, 0);
-        }
-        if (scaleDownX && rc.localScale.x > 0.3f)
-        {
-            rc.localScale -= new Vector3(scaleSpeed * Time.deltaTime, 0, 0);
-        }
-        isTransforming = rotateCCW || rotateCCW || scaleUpY || scaleDownY || scaleUpX || scaleDownX;
-
+        if (gameObjectScript == null)
+            gameObjectScript = FindFirstObjectByType<GameObjectsScript>();
     }
 
-
-
-
-
-    }
-
-    void Update()
+    private void Update()
     {
         if (gameManager != null && gameManager.GameEnded)
+        {
+            ResetControls();
             return;
+        }
 
-        if (GameObjectsScript.lastDragged == null)
+        GameObject selected = GameObjectsScript.lastDragged;
+        if (selected == null)
+        {
+            isTransforming = false;
             return;
+        }
 
-        RectTransform car = GameObjectsScript.lastDragged.GetComponent<RectTransform>();
-        if (Input.GetKey(KeyCode.Z))
-            car.Rotate(0, 0, Time.deltaTime * 24f);
-        if (Input.GetKey(KeyCode.X))
-            car.Rotate(0, 0, -Time.deltaTime * 24f);
+        RectTransform car = selected.GetComponent<RectTransform>();
+        if (car == null) return;
+
+        bool clockwise = rotateCW || Input.GetKey(KeyCode.X);
+        bool counterclockwise = rotateCCW || Input.GetKey(KeyCode.Z);
+        bool growY = scaleUpY || Input.GetKey(KeyCode.UpArrow);
+        bool shrinkY = scaleDownY || Input.GetKey(KeyCode.DownArrow);
+        bool growX = scaleUpX || Input.GetKey(KeyCode.RightArrow);
+        bool shrinkX = scaleDownX || Input.GetKey(KeyCode.LeftArrow);
+
+        isTransforming = clockwise || counterclockwise || growY || shrinkY || growX || shrinkX;
+        float dt = Time.deltaTime;
+
+        if (clockwise) car.Rotate(0f, 0f, -rotationSpeed * dt);
+        if (counterclockwise) car.Rotate(0f, 0f, rotationSpeed * dt);
 
         Vector3 scale = car.localScale;
-        if (Input.GetKey(KeyCode.UpArrow))
-            scale.y = ResizeSignedScale(scale.y, 0.0025f);
-        if (Input.GetKey(KeyCode.DownArrow))
-            scale.y = ResizeSignedScale(scale.y, -0.0025f);
-        if (Input.GetKey(KeyCode.LeftArrow))
-            scale.x = ResizeSignedScale(scale.x, -0.0025f);
-        if (Input.GetKey(KeyCode.RightArrow))
-            scale.x = ResizeSignedScale(scale.x, 0.0025f);
-        if (Input.GetKeyDown(KeyCode.Space))
-            scale.x = -scale.x;
+        if (growY) scale.y = ResizeSignedScale(scale.y, scaleSpeed * dt);
+        if (shrinkY) scale.y = ResizeSignedScale(scale.y, -scaleSpeed * dt);
+        if (growX) scale.x = ResizeSignedScale(scale.x, scaleSpeed * dt);
+        if (shrinkX) scale.x = ResizeSignedScale(scale.x, -scaleSpeed * dt);
+        if (Input.GetKeyDown(KeyCode.Space)) scale.x = -scale.x;
+        car.localScale = scale;
+    }
 
+    // Can be called from mobile UI EventTrigger PointerDown / PointerUp.
+    public void StartRotateCW() => rotateCW = true;
+    public void StopRotateCW() => rotateCW = false;
+    public void StartRotateCCW() => rotateCCW = true;
+    public void StopRotateCCW() => rotateCCW = false;
+    public void StartScaleUpX() => scaleUpX = true;
+    public void StopScaleUpX() => scaleUpX = false;
+    public void StartScaleDownX() => scaleDownX = true;
+    public void StopScaleDownX() => scaleDownX = false;
+    public void StartScaleUpY() => scaleUpY = true;
+    public void StopScaleUpY() => scaleUpY = false;
+    public void StartScaleDownY() => scaleDownY = true;
+    public void StopScaleDownY() => scaleDownY = false;
+
+    public void FlipSelected()
+    {
+        if (gameManager != null && gameManager.GameEnded) return;
+        GameObject selected = GameObjectsScript.lastDragged;
+        if (selected == null) return;
+        RectTransform car = selected.GetComponent<RectTransform>();
+        if (car == null) return;
+        Vector3 scale = car.localScale;
+        scale.x = -scale.x;
         car.localScale = scale;
     }
 
     private static float ResizeSignedScale(float value, float delta)
     {
-        return Mathf.Sign(value) * Mathf.Clamp(Mathf.Abs(value) + delta, 0.3f, 0.9f);
+        float sign = value < 0f ? -1f : 1f;
+        return sign * Mathf.Clamp(Mathf.Abs(value) + delta, 0.3f, 0.9f);
     }
+
+    private void ResetControls()
+    {
+        rotateCW = rotateCCW = false;
+        scaleUpY = scaleDownY = scaleUpX = scaleDownX = false;
+        isTransforming = false;
+    }
+
+    private void OnDisable() => ResetControls();
 }

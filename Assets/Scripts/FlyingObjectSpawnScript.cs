@@ -2,8 +2,9 @@ using UnityEngine;
 
 public class FlyingObjectSpawnScript : MonoBehaviour
 {
-    ScreenBounderiesScript screenBoundariesScript;
+    private ScreenBounderiesScript screenBoundariesScript;
     private GameManager gameManager;
+
     [Header("Cloud Prefabs")]
     public GameObject[] cloudPrefabs;
     [Header("Plain Prefabs")]
@@ -15,61 +16,66 @@ public class FlyingObjectSpawnScript : MonoBehaviour
     public float plainSpawnInterval = 3f;
 
     private float minY, maxY;
+
     [Header("Cloud Speed")]
     public float cloudMinSpeed = 1.5f;
     public float cloudMaxSpeed = 150f;
     [Header("Plain Speed")]
-    public float plainMinSpeed = 2;
+    public float plainMinSpeed = 2f;
     public float plainMaxSpeed = 150f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Start()
     {
         gameManager = FindFirstObjectByType<GameManager>();
-        screenBoundariesScript = Object.FindFirstObjectByType<ScreenBounderiesScript>();
+        screenBoundariesScript = FindFirstObjectByType<ScreenBounderiesScript>();
+        if (spawnPoint == null || screenBoundariesScript == null)
+        {
+            Debug.LogError("FlyingObjectSpawnScript: spawnPoint or ScreenBounderiesScript is missing.");
+            enabled = false;
+            return;
+        }
+
+        UpdateVerticalBounds();
+        if (cloudSpawnInterval > 0f)
+            InvokeRepeating(nameof(SpawnCloud), 0f, cloudSpawnInterval);
+        if (plainSpawnInterval > 0f)
+            InvokeRepeating(nameof(SpawnPlain), 0f, plainSpawnInterval);
+    }
+
+    private void UpdateVerticalBounds()
+    {
+        screenBoundariesScript.RecalculateBounds();
         minY = screenBoundariesScript.minY;
         maxY = screenBoundariesScript.maxY;
-        InvokeRepeating(nameof(SpawnCloud), 0f, cloudSpawnInterval);
-        InvokeRepeating(nameof(SpawnPlain), 0f, plainSpawnInterval);
     }
 
-    void SpawnCloud()
+    private void SpawnCloud()
     {
         if (gameManager != null && gameManager.GameEnded) return;
-        if (cloudPrefabs.Length == 0) return;
+        if (cloudPrefabs == null || cloudPrefabs.Length == 0) return;
+        UpdateVerticalBounds();
         GameObject prefab = cloudPrefabs[Random.Range(0, cloudPrefabs.Length)];
-        float y = Random.Range(minY, maxY);
-        Vector3 pos = new Vector3(spawnPoint.position.x, y, spawnPoint.position.z);
+        if (prefab == null) return;
+        Vector3 pos = new Vector3(spawnPoint.position.x,
+            Random.Range(minY, maxY), spawnPoint.position.z);
         GameObject cloud = Instantiate(prefab, pos, Quaternion.identity, spawnPoint);
-        float speed = Random.Range(cloudMinSpeed, cloudMaxSpeed);
-
-        FlyingObjectControllerScript controller =
-            cloud.GetComponent<FlyingObjectControllerScript>();
-
+        FlyingObjectControllerScript controller = cloud.GetComponent<FlyingObjectControllerScript>();
         if (controller != null)
-            controller.speed = speed;
+            controller.speed = Random.Range(cloudMinSpeed, cloudMaxSpeed);
     }
 
-    void SpawnPlain()
+    private void SpawnPlain()
     {
         if (gameManager != null && gameManager.GameEnded) return;
-        if (plainPrefabs.Length == 0) return;
+        if (plainPrefabs == null || plainPrefabs.Length == 0) return;
+        UpdateVerticalBounds();
         GameObject prefab = plainPrefabs[Random.Range(0, plainPrefabs.Length)];
-        float y = Random.Range(minY, maxY);
-        Vector3 pos = new Vector3(-spawnPoint.position.x, y, spawnPoint.position.z);
+        if (prefab == null) return;
+        Vector3 pos = new Vector3(-spawnPoint.position.x,
+            Random.Range(minY, maxY), spawnPoint.position.z);
         GameObject plain = Instantiate(prefab, pos, Quaternion.identity, spawnPoint);
-        float speed = Random.Range(plainMinSpeed, plainMaxSpeed);
-
-        FlyingObjectControllerScript controller =
-            plain.GetComponent<FlyingObjectControllerScript>();
-
+        FlyingObjectControllerScript controller = plain.GetComponent<FlyingObjectControllerScript>();
         if (controller != null)
-            controller.speed = -speed;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+            controller.speed = -Random.Range(plainMinSpeed, plainMaxSpeed);
     }
 }
