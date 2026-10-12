@@ -72,7 +72,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
         canvasGroup.alpha = 1f;
     }
 
-    void Update()
+    private void Update()
     {
         if (GameEnded)
         {
@@ -104,12 +104,21 @@ public class FlyingObjectControllerScript : MonoBehaviour
             StartCoroutine(FadeOutAndDestroy());
             isFadingOut = true;
         }
+        Vector2 inputPosition;
+        if (!TryGetInputPosition(out inputPosition))
+        {
+            return;
+        }
+        if (inputPosition.x < 0 || inputPosition.x > Screen.width || inputPosition.y < 0 || inputPosition.y > Screen.height || Camera.main == null)
+        {
+            return;
+        }
 
         if (CompareTag("Bomb") &&
             !isExploading &&
             RectTransformUtility.RectangleContainsScreenPoint(
                 rectTransform,
-                Input.mousePosition,
+                inputPosition,
                 Camera.main))
         {
             Debug.Log("The cursor collided with a bomb!");
@@ -117,7 +126,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
             TriggerExplosion();
         }
         if (!GameEnded && GameObjectsScript.isDragging && !isFadingOut && RectTransformUtility.RectangleContainsScreenPoint(
-                rectTransform, Input.mousePosition, Camera.main))
+                rectTransform, inputPosition, Camera.main))
                 {
             Debug.Log("The cursor colilided with a flying object");
             if(GameObjectsScript.lastDragged != null)
@@ -133,6 +142,23 @@ public class FlyingObjectControllerScript : MonoBehaviour
          }
     
     }
+
+    bool TryGetInputPosition(out Vector2 inputPosition)
+    {
+#if UNITY_EDITOR || UNITY_STANDALONE
+        inputPosition = Input.mousePosition;
+        return true;
+#elif UNITY_ANDROID
+    if (input.touchCount > 0)
+    {
+        inputPosition = Input.GetTouch(0).position;
+        return true;
+    }else {
+        inputPosition = Vector2.zero;
+        return false;
+
+    }
+#endif
 
     IEnumerator ShrinkAndDestroy(GameObject obj, float duration)
     {
@@ -158,14 +184,6 @@ public class FlyingObjectControllerScript : MonoBehaviour
             obj.transform.rotation =Quaternion.Euler(0f,0f,angle);
 
             yield return null;
-        }
-
-        if (GameEnded || obj == null)
-            yield break;
-
-        if (gameManager != null)
-        {
-            gameManager.VehicleDestroyed();
         }
 
         Destroy(obj);
@@ -219,6 +237,10 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
     IEnumerator Vibrate()
     {
+#if UNITY_ANDROID
+        Handheld.Vibrate();
+#endif
+
         Vector2 originalPos = rectTransform.anchoredPosition;
 
         float duration = 0.4f;
@@ -299,10 +321,8 @@ public class FlyingObjectControllerScript : MonoBehaviour
         }
     }
 
-    public void StartAndDestroy(Color color)
+    public void StartAndDestroy(Color color, bool triggerRetry = false)
     {
-        if (GameEnded)
-            return;
 
         if (!isFadingOut)
         {

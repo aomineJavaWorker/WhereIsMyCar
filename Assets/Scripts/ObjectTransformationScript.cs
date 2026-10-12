@@ -4,11 +4,53 @@ public class ObjectTransformationScript : MonoBehaviour
 {
     public GameObjectsScript gameObjectScript;
     private GameManager gameManager;
+    public float rotationSpeed = 90f;
+    public float scaleSpeed = 0.5f;
+    private bool rotateCW, rotateCCW; scaleUpY, scaleDownY, scaleUpX, scaleDownX;
+    public static bool isTransforming = false;
+
 
     void Awake()
     {
         gameManager = FindFirstObjectByType<GameManager>();
-        gameObjectScript = FindFirstObjectByType<GameObjectsScript>();
+        if (GameObjectsScript.lastDragged == null)
+        {
+            return;
+        }
+        RectTransform rc = GameObjectsScript.lastDragged.GetComponent<RectTransform>();
+
+        if (rotateCW)
+        {
+            rc.Rotate(0, 0, -rotationSpeed * Time.deltaTime);
+        }
+        if (rotateCCW)
+        {
+            rc.Rotate(0, 0, rotationSpeed * Time.deltaTime);
+        }
+        if (scaleUpY && rc.localScale.y < 0.9f)
+        {
+            rc.localScale += new Vector3(0, scaleSpeed * Time.deltaTime, 0);
+        }
+        if (scaleDownY && rc.localScale.y > 0.3f)
+        {
+            rc.localScale -= new Vector3(0, scaleSpeed * Time.deltaTime, 0);
+        }
+        if (scaleUpX && rc.localScale.x < 0.9f)
+        {
+            rc.localScale += new Vector3(scaleSpeed * Time.deltaTime, 0, 0);
+        }
+        if (scaleDownX && rc.localScale.x > 0.3f)
+        {
+            rc.localScale -= new Vector3(scaleSpeed * Time.deltaTime, 0, 0);
+        }
+        isTransforming = rotateCCW || rotateCCW || scaleUpY || scaleDownY || scaleUpX || scaleDownX;
+
+    }
+
+
+
+
+
     }
 
     void Update()
