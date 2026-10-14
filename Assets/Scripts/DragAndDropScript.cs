@@ -11,6 +11,7 @@ public class DragAndDropScript : MonoBehaviour,
     private GameManager gameManager;
     private RectTransform rectTransform;
     private Vector3 startPosition;
+    private Vector3 dragOffsetWorld;
     private bool hasStartPosition;
     private bool placedThisDrag;
     [HideInInspector] public bool isPlaced = false;
@@ -37,15 +38,15 @@ public class DragAndDropScript : MonoBehaviour,
     public void SaveStartPosition()
     {
         if (rectTransform == null) rectTransform = GetComponent<RectTransform>();
+        if (rectTransform == null) return;
         startPosition = rectTransform.localPosition;
         hasStartPosition = true;
     }
 
     public void ReturnToStart()
     {
-        if (GameEnded) return;
-        if (rectTransform != null && hasStartPosition)
-            rectTransform.localPosition = startPosition;
+        if (GameEnded || !hasStartPosition || rectTransform == null) return;
+        rectTransform.localPosition = startPosition;
     }
 
     public bool ConfirmPlacement()
@@ -56,15 +57,19 @@ public class DragAndDropScript : MonoBehaviour,
         return true;
     }
 
-    private static bool IsPrimaryPointer(PointerEventData eventData)
+    private static bool IsPrimaryPointer(PointerEventData data)
     {
-        // On touchscreen, Unity's pointer events still use Left for the primary finger.
-        return eventData.button == PointerEventData.InputButton.Left;
+        return data.button == PointerEventData.InputButton.Left;
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         if (GameEnded || isPlaced || !IsPrimaryPointer(eventData)) return;
+
+        // A simple tap selects the car too, so the phone buttons work
+        // even before the player starts dragging it.
+        GameObjectsScript.lastDragged = gameObject;
+
         if (gameObjectsScript != null && gameObjectsScript.carSoundSource != null &&
             gameObjectsScript.sounds != null && gameObjectsScript.sounds.Length > 0 &&
             gameObjectsScript.sounds[0] != null)
@@ -75,11 +80,11 @@ public class DragAndDropScript : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (GameEnded || isPlaced || !IsPrimaryPointer(eventData)) return;
-        if (rectTransform == null || canvasGroup == null) return;
+        if (GameEnded || isPlaced || !IsPrimaryPointer(eventData) ||
+            rectTransform == null || canvasGroup == null) return;
 
         GameObjectsScript.isDragging = true;
-        GameObjectsScript.lastDragged = eventData.pointerDrag;
+        GameObjectsScript.lastDragged = gameObject;
         placedThisDrag = false;
         if (gameObjectsScript != null) gameObjectsScript.inRightPlace = false;
         canvasGroup.alpha = 0.6f;
@@ -91,33 +96,35 @@ public class DragAndDropScript : MonoBehaviour,
             transform.SetSiblingIndex(Mathf.Max(0, lastIndex - 1));
         }
 
-        // Use the actual Canvas plane instead of Camera.ScreenToWorldPoint(z=0).
-        // That works for Screen Space - Camera on both desktop and Android.
-        Vector3 worldPointer;
-        if (TryGetWorldPointer(eventData, out worldPointer) && screenBounderiesScript != null)
-        {
-            screenBounderiesScript.screenPoint = new Vector3(eventData.position.x,
-                eventData.position.y, Mathf.Abs(worldPointer.z - CameraDepth()));
-            screenBounderiesScript.offset = rectTransform.position - worldPointer;
-        }
+        Vector3 pointer;
+        dragOffsetWorld = TryGetWorldPointer(eventData, out pointer)
+            ? rectTransform.position - pointer : Vector3.zero;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (GameEnded || isPlaced || !IsPrimaryPointer(eventData)) return;
-        if (screenBounderiesScript == null || rectTransform == null) return;
+        if (GameEnded || isPlaced || !GameObjectsScript.isDragging ||
+            !IsPrimaryPointer(eventData) || rectTransform == null) return;
 
         Vector3 pointer;
         if (!TryGetWorldPointer(eventData, out pointer)) return;
+        Vector3 desired = pointer + dragOffsetWorld;
+        desired.z = rectTransform.position.z;
 
-        Vector3 newPosition = pointer + screenBounderiesScript.offset;
-        Vector2 clamped = screenBounderiesScript.GetClampedPosition(newPosition);
-        rectTransform.position = new Vector3(clamped.x, clamped.y, rectTransform.position.z);
+        if (screenBounderiesScript != null)
+        {
+            screenBounderiesScript.RecalculateBounds();
+            Vector2 clamped = screenBounderiesScript.GetClampedPosition(desired);
+            desired.x = clamped.x;
+            desired.y = clamped.y;
+        }
+        rectTransform.position = desired;
     }
 
     private bool TryGetWorldPointer(PointerEventData eventData, out Vector3 world)
     {
         world = Vector3.zero;
+        if (rectTransform == null) return false;
         RectTransform parentRect = rectTransform.parent as RectTransform;
         if (parentRect == null) return false;
 
@@ -128,14 +135,19 @@ public class DragAndDropScript : MonoBehaviour,
             if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
                 uiCamera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
         }
+        if (uiCamera == null && GetComponentInParent<Canvas>()?.renderMode == RenderMode.WorldSpace)
+            return false;
+
         return RectTransformUtility.ScreenPointToWorldPointInRectangle(
-            parentRect, eventData.position, uiCamera, out world);
+            parentRect, eventData.position, uiCamera, out world) &&
+            IsFinite(world);
     }
 
-    private float CameraDepth()
+    private static bool IsFinite(Vector3 p)
     {
-        Camera camera = Camera.main;
-        return camera != null ? camera.transform.position.z : 0f;
+        return !float.IsNaN(p.x) && !float.IsInfinity(p.x) &&
+               !float.IsNaN(p.y) && !float.IsInfinity(p.y) &&
+               !float.IsNaN(p.z) && !float.IsInfinity(p.z);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -150,7 +162,7 @@ public class DragAndDropScript : MonoBehaviour,
             GameObjectsScript.lastDragged = null;
         if (gameObjectsScript != null)
             gameObjectsScript.inRightPlace = false;
-
-        // Wrong tag -> DropPlaceScript returns car; wrong size / background -> stays.
+        // Wrong tag -> returns to start; right tag with wrong size -> stays.
+        // Dropping on the background -> stays.
     }
 }

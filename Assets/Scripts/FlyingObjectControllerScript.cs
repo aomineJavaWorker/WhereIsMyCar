@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class FlyingObjectControllerScript : MonoBehaviour
 {
@@ -18,6 +20,11 @@ public class FlyingObjectControllerScript : MonoBehaviour
     private Color originalColor;
     private bool isFadingOut;
     private bool isExploading;
+    private Coroutine fadeInRoutine;
+    // Reuse screen-corner arrays to avoid per-frame garbage collection on phones.
+    private readonly Vector3[] worldCorners = new Vector3[4];
+    private readonly Vector2[] screenCorners = new Vector2[4];
+    private static readonly List<RaycastResult> uiHits = new List<RaycastResult>();
 
     private bool GameEnded => gameManager != null && gameManager.GameEnded;
 
@@ -28,34 +35,30 @@ public class FlyingObjectControllerScript : MonoBehaviour
         rectTransform = GetComponent<RectTransform>();
         image = GetComponent<Image>();
         if (image != null) originalColor = image.color;
-
         gameObjectsScript = FindFirstObjectByType<GameObjectsScript>();
         screenBounderiesScript = FindFirstObjectByType<ScreenBounderiesScript>();
         gameManager = FindFirstObjectByType<GameManager>();
-        StartCoroutine(FadeIn());
+        fadeInRoutine = StartCoroutine(FadeIn());
     }
 
     private IEnumerator FadeIn()
     {
-        float time = 0f;
-        while (time < fadeDuration)
+        float duration = Mathf.Max(0.01f, fadeDuration);
+        float elapsed = 0f;
+        while (elapsed < duration && !GameEnded)
         {
-            if (GameEnded) yield break;
-            time += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(0f, 1f,
-                Mathf.Clamp01(time / Mathf.Max(0.01f, fadeDuration)));
+            elapsed += Time.deltaTime;
+            if (canvasGroup != null)
+                canvasGroup.alpha = Mathf.Clamp01(elapsed / duration);
             yield return null;
         }
-        if (!GameEnded) canvasGroup.alpha = 1f;
+        if (!GameEnded && canvasGroup != null) canvasGroup.alpha = 1f;
+        fadeInRoutine = null;
     }
 
     private void Update()
     {
-        if (GameEnded)
-        {
-            StopAllCoroutines();
-            return;
-        }
+        if (GameEnded) return;
         if (rectTransform == null) return;
 
         float waveOffset = Mathf.Sin(Time.time * waveFrequency) * waveAmplitude;
@@ -64,55 +67,80 @@ public class FlyingObjectControllerScript : MonoBehaviour
 
         if (screenBounderiesScript != null && !isFadingOut)
         {
-            if (speed > 0f && transform.position.x < screenBounderiesScript.minX + 80f ||
-                speed < 0f && transform.position.x > screenBounderiesScript.maxX - 80f)
+            if ((speed > 0f && transform.position.x < screenBounderiesScript.minX + 80f) ||
+                (speed < 0f && transform.position.x > screenBounderiesScript.maxX - 80f))
             {
-                isFadingOut = true;
-                StartCoroutine(FadeOutAndDestroy());
+                StartAndFadeOut();
                 return;
             }
         }
 
+        if (!GameObjectsScript.isDragging && (!CompareTag("Bomb") || isExploading)) return;
+
         Vector2 pointer;
-        if (!TryGetInputPosition(out pointer)) return;
+        if (!TryGetInputPosition(out pointer) || !IsValidScreenPosition(pointer)) return;
+        if (IsTouchOnButton(pointer)) return;
 
-        // Protect RectangleContainsScreenPoint against Infinity, NaN and
-        // out-of-screen values (the Android 'screen pos inf, -inf' warning).
-        if (!IsValidScreenPosition(pointer)) return;
-
-        Canvas canvas = GetComponentInParent<Canvas>();
-        Camera uiCamera = Camera.main;
-        if (canvas != null)
-        {
-            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-                uiCamera = null;
-            else if (canvas.worldCamera != null)
-                uiCamera = canvas.worldCamera;
-        }
-
-        if (!RectTransformUtility.RectangleContainsScreenPoint(
-            rectTransform, pointer, uiCamera)) return;
+        // Important Android fix: NEVER use RectangleContainsScreenPoint here.
+        // It can project invalid world-space UI corners to (Infinity, -Infinity)
+        // even when the touch position is valid. Project all four corners ourselves,
+        // reject non-finite projections and test the convex quadrilateral.
+        if (!IsPointInsideProjectedRect(pointer)) return;
 
         if (CompareTag("Bomb") && !isExploading)
-        {
-            Debug.Log("The cursor collided with a bomb!");
             TriggerExplosion();
-        }
 
         if (!GameEnded && GameObjectsScript.isDragging && !isFadingOut)
         {
-            Debug.Log("The cursor collided with a flying object!");
             GameObject dragged = GameObjectsScript.lastDragged;
             if (dragged != null)
             {
-                // Cancel dragging immediately, but count the lost vehicle only
-                // when its shrink animation finishes.
                 GameObjectsScript.lastDragged = null;
                 GameObjectsScript.isDragging = false;
                 StartCoroutine(ShrinkAndDestroy(dragged, 0.5f));
             }
             StartAndDestroy(CompareTag("Bomb") ? Color.red : Color.cyan);
         }
+    }
+
+    private bool IsPointInsideProjectedRect(Vector2 pointer)
+    {
+        if (rectTransform == null) return false;
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Camera uiCamera = null;
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            uiCamera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+        if (canvas != null && canvas.renderMode == RenderMode.WorldSpace && uiCamera == null)
+            return false;
+
+        rectTransform.GetWorldCorners(worldCorners);
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 point = RectTransformUtility.WorldToScreenPoint(uiCamera, worldCorners[i]);
+            if (!IsFinite(point) || (uiCamera != null &&
+                uiCamera.orthographic == false && point.z <= 0f)) return false;
+            screenCorners[i] = new Vector2(point.x, point.y);
+        }
+
+        bool positive = false, negative = false;
+        for (int i = 0; i < 4; i++)
+        {
+            Vector2 a = screenCorners[i];
+            Vector2 b = screenCorners[(i + 1) % 4];
+            float cross = (b.x - a.x) * (pointer.y - a.y) -
+                          (b.y - a.y) * (pointer.x - a.x);
+            if (cross > 0.01f) positive = true;
+            if (cross < -0.01f) negative = true;
+            if (positive && negative) return false;
+        }
+        return true;
+    }
+
+    private static bool IsFinite(Vector3 p)
+    {
+        return !float.IsNaN(p.x) && !float.IsInfinity(p.x) &&
+               !float.IsNaN(p.y) && !float.IsInfinity(p.y) &&
+               !float.IsNaN(p.z) && !float.IsInfinity(p.z);
     }
 
     private static bool TryGetInputPosition(out Vector2 inputPosition)
@@ -126,6 +154,11 @@ public class FlyingObjectControllerScript : MonoBehaviour
         inputPosition = Vector2.zero;
         return false;
 #else
+        if (Input.touchCount > 0)
+        {
+            inputPosition = Input.GetTouch(0).position;
+            return true;
+        }
         inputPosition = Input.mousePosition;
         return true;
 #endif
@@ -139,13 +172,27 @@ public class FlyingObjectControllerScript : MonoBehaviour
             position.y >= 0f && position.y <= Screen.height;
     }
 
+    private static bool IsTouchOnButton(Vector2 position)
+    {
+        if (EventSystem.current == null) return false;
+        var pointer = new PointerEventData(EventSystem.current) { position = position };
+        uiHits.Clear();
+        EventSystem.current.RaycastAll(pointer, uiHits);
+        foreach (RaycastResult hit in uiHits)
+        {
+            if (hit.gameObject.GetComponentInParent<Button>() != null ||
+                hit.gameObject.GetComponentInParent<MobileTransformButtonScript>() != null)
+                return true;
+        }
+        return false;
+    }
+
     private IEnumerator ShrinkAndDestroy(GameObject obj, float duration)
     {
         if (GameEnded || obj == null) yield break;
         Vector3 originalScale = obj.transform.localScale;
         Quaternion originalRotation = obj.transform.rotation;
         float time = 0f;
-
         while (time < duration)
         {
             if (GameEnded || obj == null) yield break;
@@ -155,7 +202,6 @@ public class FlyingObjectControllerScript : MonoBehaviour
             obj.transform.rotation = originalRotation * Quaternion.Euler(0f, 0f, 360f * progress);
             yield return null;
         }
-
         if (GameEnded || obj == null) yield break;
         Destroy(obj);
         if (gameManager != null) gameManager.VehicleDestroyed();
@@ -166,7 +212,6 @@ public class FlyingObjectControllerScript : MonoBehaviour
         if (GameEnded || isExploading) return;
         isExploading = true;
         PlaySound(14, 5f);
-
         if (TryGetComponent<Animator>(out Animator animator))
             animator.SetBool("explode", true);
         if (image != null)
@@ -200,9 +245,8 @@ public class FlyingObjectControllerScript : MonoBehaviour
 #endif
         if (rectTransform == null) yield break;
         Vector2 originalPos = rectTransform.anchoredPosition;
-        float duration = 0.4f;
         float elapsed = 0f;
-        while (elapsed < duration)
+        while (elapsed < 0.4f)
         {
             if (GameEnded) yield break;
             rectTransform.anchoredPosition = originalPos + Random.insideUnitCircle * 5f;
@@ -218,7 +262,6 @@ public class FlyingObjectControllerScript : MonoBehaviour
         float radius = 0f;
         if (TryGetComponent<CircleCollider2D>(out CircleCollider2D circle))
             radius = circle.radius * Mathf.Abs(transform.lossyScale.x);
-
         ExplodeAndDestroyNearbyObjects(radius);
         yield return new WaitForSeconds(1f);
         if (GameEnded) yield break;
@@ -234,40 +277,50 @@ public class FlyingObjectControllerScript : MonoBehaviour
         {
             if (GameEnded) return;
             if (item == null || item.gameObject == gameObject) continue;
-            FlyingObjectControllerScript flyingObject =
-                item.GetComponent<FlyingObjectControllerScript>();
+            FlyingObjectControllerScript flyingObject = item.GetComponent<FlyingObjectControllerScript>();
             if (flyingObject != null && !flyingObject.isExploading)
                 flyingObject.StartAndDestroy(Color.cyan);
         }
     }
 
-    // Keep the optional argument from your Android version for compatibility.
+    // Optional argument is retained for compatibility with your scene/scripts.
     public void StartAndDestroy(Color color, bool triggerRetry = false)
     {
         if (GameEnded || isFadingOut) return;
-        isFadingOut = true;
         if (image != null)
         {
             image.color = color;
             StartCoroutine(RecoverColor(0.5f));
         }
         StartCoroutine(Vibrate());
-        StartCoroutine(FadeOutAndDestroy());
+        StartAndFadeOut();
         PlaySound(14);
+    }
+
+    private void StartAndFadeOut()
+    {
+        if (isFadingOut) return;
+        isFadingOut = true;
+        if (fadeInRoutine != null)
+        {
+            StopCoroutine(fadeInRoutine);
+            fadeInRoutine = null;
+        }
+        StartCoroutine(FadeOutAndDestroy());
     }
 
     private IEnumerator FadeOutAndDestroy()
     {
         if (GameEnded) yield break;
         float time = 0f;
+        float duration = Mathf.Max(0.01f, fadeDuration);
         float startAlpha = canvasGroup != null ? canvasGroup.alpha : 1f;
-        while (time < fadeDuration)
+        while (time < duration)
         {
             if (GameEnded) yield break;
             time += Time.deltaTime;
             if (canvasGroup != null)
-                canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f,
-                    Mathf.Clamp01(time / Mathf.Max(0.01f, fadeDuration)));
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, Mathf.Clamp01(time / duration));
             yield return null;
         }
         if (GameEnded) yield break;

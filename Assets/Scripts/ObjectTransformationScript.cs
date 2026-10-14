@@ -1,13 +1,17 @@
 using UnityEngine;
 
+// Keeps the PC keys and adds press-and-hold support for Android UI buttons.
 public class ObjectTransformationScript : MonoBehaviour
 {
-    // Keep both the original reference and Inspector settings.
     public GameObjectsScript gameObjectScript;
-    private GameManager gameManager;
     public float rotationSpeed = 90f;
     public float scaleSpeed = 0.5f;
 
+    [Header("Limits (absolute size; negative X is used for flip)")]
+    public float minScale = 0.3f;
+    public float maxScale = 0.9f;
+
+    private GameManager gameManager;
     private bool rotateCW, rotateCCW;
     private bool scaleUpY, scaleDownY, scaleUpX, scaleDownX;
     public static bool isTransforming = false;
@@ -30,7 +34,14 @@ public class ObjectTransformationScript : MonoBehaviour
         GameObject selected = GameObjectsScript.lastDragged;
         if (selected == null)
         {
-            isTransforming = false;
+            ResetControls();
+            return;
+        }
+
+        DragAndDropScript drag = selected.GetComponent<DragAndDropScript>();
+        if (drag != null && drag.isPlaced)
+        {
+            ResetControls();
             return;
         }
 
@@ -46,7 +57,6 @@ public class ObjectTransformationScript : MonoBehaviour
 
         isTransforming = clockwise || counterclockwise || growY || shrinkY || growX || shrinkX;
         float dt = Time.deltaTime;
-
         if (clockwise) car.Rotate(0f, 0f, -rotationSpeed * dt);
         if (counterclockwise) car.Rotate(0f, 0f, rotationSpeed * dt);
 
@@ -59,7 +69,7 @@ public class ObjectTransformationScript : MonoBehaviour
         car.localScale = scale;
     }
 
-    // Can be called from mobile UI EventTrigger PointerDown / PointerUp.
+    // These existing public methods are retained for old Unity EventTrigger links.
     public void StartRotateCW() => rotateCW = true;
     public void StopRotateCW() => rotateCW = false;
     public void StartRotateCCW() => rotateCCW = true;
@@ -78,6 +88,8 @@ public class ObjectTransformationScript : MonoBehaviour
         if (gameManager != null && gameManager.GameEnded) return;
         GameObject selected = GameObjectsScript.lastDragged;
         if (selected == null) return;
+        DragAndDropScript drag = selected.GetComponent<DragAndDropScript>();
+        if (drag != null && drag.isPlaced) return;
         RectTransform car = selected.GetComponent<RectTransform>();
         if (car == null) return;
         Vector3 scale = car.localScale;
@@ -85,10 +97,12 @@ public class ObjectTransformationScript : MonoBehaviour
         car.localScale = scale;
     }
 
-    private static float ResizeSignedScale(float value, float delta)
+    private float ResizeSignedScale(float value, float delta)
     {
         float sign = value < 0f ? -1f : 1f;
-        return sign * Mathf.Clamp(Mathf.Abs(value) + delta, 0.3f, 0.9f);
+        float low = Mathf.Max(0.01f, minScale);
+        float high = Mathf.Max(low, maxScale);
+        return sign * Mathf.Clamp(Mathf.Abs(value) + delta, low, high);
     }
 
     private void ResetControls()
