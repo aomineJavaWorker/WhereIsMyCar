@@ -15,6 +15,7 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Vector3 targetScale;
     private float elapsed;
     private bool animating;
+    internal object interactable;
 
     private void Awake()
     {
