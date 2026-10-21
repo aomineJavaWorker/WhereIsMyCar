@@ -35,10 +35,14 @@ public class GameManager : MonoBehaviour
 
     private AudioSource backgroundMusicSource;
     private bool gameFinished = false;
+    private int displayedSeconds = -1;
     public bool GameEnded => gameFinished;
 
     private void Start()
     {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        Application.targetFrameRate = 60;
+#endif
         Time.timeScale = 1f;
         elapsedTime = 0f;
         placedVehicles = 0;
@@ -76,6 +80,9 @@ public class GameManager : MonoBehaviour
     private void UpdateTimerText()
     {
         if (timerText == null) return;
+        int seconds = Mathf.FloorToInt(elapsedTime);
+        if (seconds == displayedSeconds) return;
+        displayedSeconds = seconds;
         TimeSpan time = TimeSpan.FromSeconds(elapsedTime);
         timerText.text = time.ToString(@"hh\:mm\:ss");
     }

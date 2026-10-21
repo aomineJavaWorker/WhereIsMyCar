@@ -5,6 +5,9 @@ TextureImporter:
   - first:
       213: 8135142445426999207
     second: Izkartne_0
+  - first:
+      213: 21300002
+    second: TimerPanel_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -147,6 +150,28 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: TimerPanel_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 675
+        width: 844
+        height: 373
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d78d10e12edb4ddf94a6b107a52fe193
+      internalID: 21300002
+      vertices: []
+      indices:
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -162,6 +187,7 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       Izkartne_0: 8135142445426999207
+      TimerPanel_0: 21300002
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

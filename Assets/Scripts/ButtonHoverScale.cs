@@ -15,7 +15,6 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Vector3 targetScale;
     private float elapsed;
     private bool animating;
-    internal object interactable;
 
     private void Awake()
     {
@@ -25,12 +24,14 @@ public class ButtonHoverScale : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (Application.isMobilePlatform) return;
         if (button.IsInteractable())
             AnimateTo(originalScale * Mathf.Max(1f, hoverScale));
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (Application.isMobilePlatform) return;
         AnimateTo(originalScale);
     }
 

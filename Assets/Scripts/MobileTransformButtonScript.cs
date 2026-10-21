@@ -20,6 +20,7 @@ public class MobileTransformButtonScript : MonoBehaviour,
     public Action action;
     public ObjectTransformationScript transformation;
     private bool isPressed;
+    private int pointerId;
 
     private void Awake()
     {
@@ -29,19 +30,23 @@ public class MobileTransformButtonScript : MonoBehaviour,
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (transformation == null || isPressed) return;
+        if (transformation == null || isPressed || eventData.button != PointerEventData.InputButton.Left) return;
         if (action == Action.Flip)
         {
             transformation.FlipSelected();
             return;
         }
         isPressed = true;
+        pointerId = eventData.pointerId;
         SetPressed(true);
     }
 
-    public void OnPointerUp(PointerEventData eventData) => Release();
-    public void OnPointerExit(PointerEventData eventData) => Release();
+    public void OnPointerUp(PointerEventData eventData) { if (eventData.pointerId == pointerId) Release(); }
+    public void OnPointerExit(PointerEventData eventData) { if (eventData.pointerId == pointerId) Release(); }
     private void OnDisable() => Release();
+    public void CancelPress() => Release();
+    private void OnApplicationFocus(bool focused) { if (!focused) Release(); }
+    private void OnApplicationPause(bool paused) { if (paused) Release(); }
 
     private void Release()
     {

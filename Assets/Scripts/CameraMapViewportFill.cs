@@ -1,11 +1,12 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Prevents the Camera's blue clear color from appearing around the map.
 /// The map is never stretched: on tall screens it is deliberately cropped,
 /// and the existing CameraZoomScript lets players pan to reach hidden areas.
 /// </summary>
-[DefaultExecutionOrder(900)]
+[DefaultExecutionOrder(-1000)]
 [RequireComponent(typeof(Camera))]
 public class CameraMapViewportFill : MonoBehaviour
 {
@@ -26,6 +27,42 @@ public class CameraMapViewportFill : MonoBehaviour
         }
         if (boundaries == null)
             boundaries = FindFirstObjectByType<ScreenBounderiesScript>();
+        RestoreMapAspect();
+    }
+
+    private void RestoreMapAspect()
+    {
+        if (mapImage == null || !mapImage.TryGetComponent(out Image image) || image.sprite == null) return;
+        Canvas canvas = mapImage.GetComponentInParent<Canvas>();
+        if (canvas == null || canvas.renderMode != RenderMode.WorldSpace) return;
+        float width = mapImage.rect.width;
+        float height = mapImage.rect.height;
+        float nativeHeight = width * image.sprite.rect.height / image.sprite.rect.width;
+        if (height <= 0f || Mathf.Abs(nativeHeight - height) < .1f) return;
+
+        // The authored map was stretched to 2270x1080 although its sprite is
+        // 2728x1974. Restore the image proportions and move the authored points
+        // with the map. Vehicle/animal sizes and their transform rules stay intact.
+        RectTransform[] items = canvas.GetComponentsInChildren<RectTransform>(true);
+        Vector3[] positions = new Vector3[items.Length];
+        float ratio = nativeHeight / height;
+        float centerY = mapImage.position.y;
+        for (int i = 0; i < items.Length; i++)
+        {
+            positions[i] = items[i].position;
+            positions[i].y = centerY + (positions[i].y - centerY) * ratio;
+        }
+        mapImage.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, nativeHeight);
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (items[i] == mapImage || items[i] == canvas.transform) continue;
+            items[i].position = positions[i];
+            if (items[i].TryGetComponent(out AnimalMovementScript animal))
+            {
+                animal.minPosition.y *= ratio;
+                animal.maxPosition.y *= ratio;
+            }
+        }
     }
 
     private void LateUpdate()

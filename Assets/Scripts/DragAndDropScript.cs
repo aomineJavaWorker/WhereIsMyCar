@@ -14,7 +14,12 @@ public class DragAndDropScript : MonoBehaviour,
     private Vector3 dragOffsetWorld;
     private bool hasStartPosition;
     private bool placedThisDrag;
+    private bool ownsDrag;
+    private int activePointerId;
+    private Vector2 dragPointerPosition;
+    private readonly Vector3[] corners = new Vector3[4];
     [HideInInspector] public bool isPlaced = false;
+    public bool IsBeingDestroyed { get; private set; }
 
     private bool GameEnded => gameManager != null && gameManager.GameEnded;
 
@@ -45,13 +50,13 @@ public class DragAndDropScript : MonoBehaviour,
 
     public void ReturnToStart()
     {
-        if (GameEnded || !hasStartPosition || rectTransform == null) return;
+        if (GameEnded || IsBeingDestroyed || !hasStartPosition || rectTransform == null) return;
         rectTransform.localPosition = startPosition;
     }
 
     public bool ConfirmPlacement()
     {
-        if (GameEnded || isPlaced) return false;
+        if (GameEnded || isPlaced || IsBeingDestroyed) return false;
         isPlaced = true;
         placedThisDrag = true;
         return true;
@@ -64,7 +69,8 @@ public class DragAndDropScript : MonoBehaviour,
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (GameEnded || isPlaced || !IsPrimaryPointer(eventData)) return;
+        if (GameEnded || isPlaced || IsBeingDestroyed || !IsPrimaryPointer(eventData)) return;
+        if (GameObjectsScript.isDragging) return;
 
         // A simple tap selects the car too, so the phone buttons work
         // even before the player starts dragging it.
@@ -80,9 +86,13 @@ public class DragAndDropScript : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (GameEnded || isPlaced || !IsPrimaryPointer(eventData) ||
+        if (GameEnded || isPlaced || IsBeingDestroyed || !IsPrimaryPointer(eventData) ||
             rectTransform == null || canvasGroup == null) return;
+        if (GameObjectsScript.isDragging || ownsDrag) return;
 
+        ownsDrag = true;
+        activePointerId = eventData.pointerId;
+        dragPointerPosition = eventData.position;
         GameObjectsScript.isDragging = true;
         GameObjectsScript.lastDragged = gameObject;
         placedThisDrag = false;
@@ -103,10 +113,12 @@ public class DragAndDropScript : MonoBehaviour,
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (GameEnded || isPlaced || !GameObjectsScript.isDragging ||
+        if (GameEnded || isPlaced || IsBeingDestroyed || !GameObjectsScript.isDragging ||
+            !ownsDrag || eventData.pointerId != activePointerId ||
             !IsPrimaryPointer(eventData) || rectTransform == null) return;
 
         Vector3 pointer;
+        dragPointerPosition = eventData.position;
         if (!TryGetWorldPointer(eventData, out pointer)) return;
         Vector3 desired = pointer + dragOffsetWorld;
         desired.z = rectTransform.position.z;
@@ -119,12 +131,58 @@ public class DragAndDropScript : MonoBehaviour,
             desired.y = clamped.y;
         }
         rectTransform.position = desired;
+        ClampToMap();
+    }
+
+    public void ClampToMap()
+    {
+        if (rectTransform == null || screenBounderiesScript == null) return;
+        Rect bounds = screenBounderiesScript.worldBounds;
+        rectTransform.GetWorldCorners(corners);
+        Vector2 min = corners[0], max = corners[0];
+        for (int i = 1; i < corners.Length; i++)
+        {
+            min = Vector2.Min(min, corners[i]);
+            max = Vector2.Max(max, corners[i]);
+        }
+        Vector3 shift = Vector3.zero;
+        shift.x = max.x - min.x > bounds.width ? bounds.center.x - (min.x + max.x) * .5f :
+            Mathf.Max(0f, bounds.xMin - min.x) + Mathf.Min(0f, bounds.xMax - max.x);
+        shift.y = max.y - min.y > bounds.height ? bounds.center.y - (min.y + max.y) * .5f :
+            Mathf.Max(0f, bounds.yMin - min.y) + Mathf.Min(0f, bounds.yMax - max.y);
+        rectTransform.position += shift;
+    }
+
+    public bool TryGetDragPointer(out Vector2 position)
+    {
+        // InputSystemUIInputModule encodes device IDs in pointerId; it is not
+        // necessarily Input.GetTouch(i).fingerId. Use this drag's event position.
+        position = dragPointerPosition;
+        return ownsDrag;
+    }
+
+    public void BeginDestruction()
+    {
+        IsBeingDestroyed = true;
+        ownsDrag = false;
+        if (canvasGroup != null) { canvasGroup.alpha = 1f; canvasGroup.blocksRaycasts = false; }
+        if (GameObjectsScript.lastDragged == gameObject)
+        {
+            GameObjectsScript.lastDragged = null;
+            GameObjectsScript.isDragging = false;
+        }
     }
 
     private bool TryGetWorldPointer(PointerEventData eventData, out Vector3 world)
     {
         world = Vector3.zero;
         if (rectTransform == null) return false;
+        Vector2 screen = eventData.position;
+        if (Screen.width <= 0 || Screen.height <= 0 ||
+            float.IsNaN(screen.x) || float.IsInfinity(screen.x) ||
+            float.IsNaN(screen.y) || float.IsInfinity(screen.y)) return false;
+        screen.x = Mathf.Clamp(screen.x, 0f, Screen.width);
+        screen.y = Mathf.Clamp(screen.y, 0f, Screen.height);
         RectTransform parentRect = rectTransform.parent as RectTransform;
         if (parentRect == null) return false;
 
@@ -139,7 +197,7 @@ public class DragAndDropScript : MonoBehaviour,
             return false;
 
         return RectTransformUtility.ScreenPointToWorldPointInRectangle(
-            parentRect, eventData.position, uiCamera, out world) &&
+            parentRect, screen, uiCamera, out world) &&
             IsFinite(world);
     }
 
@@ -152,6 +210,8 @@ public class DragAndDropScript : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (!ownsDrag || eventData.pointerId != activePointerId) return;
+        ownsDrag = false;
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 1f;
@@ -165,4 +225,19 @@ public class DragAndDropScript : MonoBehaviour,
         // Wrong tag -> returns to start; right tag with wrong size -> stays.
         // Dropping on the background -> stays.
     }
+
+    private void OnDisable()
+    {
+        if (!ownsDrag) return;
+        ownsDrag = false;
+        if (canvasGroup != null) { canvasGroup.alpha = 1f; canvasGroup.blocksRaycasts = !isPlaced; }
+        if (GameObjectsScript.lastDragged == gameObject)
+        {
+            GameObjectsScript.isDragging = false;
+            GameObjectsScript.lastDragged = null;
+        }
+    }
+
+    private void OnApplicationFocus(bool focused) { if (!focused) OnDisable(); }
+    private void OnApplicationPause(bool paused) { if (paused) OnDisable(); }
 }

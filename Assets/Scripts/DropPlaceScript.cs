@@ -30,17 +30,19 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
             !eventData.pointerDrag.TryGetComponent(out DragAndDropScript draggedCar))
             return;
 
-        gameObjectsScript.inRightPlace = false;
+        if (draggedCar.isPlaced || draggedCar.IsBeingDestroyed) return;
+        if (gameObjectsScript != null) gameObjectsScript.inRightPlace = false;
         if (!draggedCar.CompareTag(tag))
         {
             // Return the actual dragged instance before playing feedback.
             draggedCar.ReturnToStart();
-            gameObjectsScript.carSoundSource.PlayOneShot(gameObjectsScript.sounds[4]);
+            PlaySound(4);
             return;
         }
 
         RectTransform car = draggedCar.GetComponent<RectTransform>();
         RectTransform place = GetComponent<RectTransform>();
+        if (car == null || place == null) return;
         bool sizeCorrect =
             Mathf.Abs(Mathf.Abs(car.localScale.x) - Mathf.Abs(place.localScale.x)) <= SizeTolerance &&
             Mathf.Abs(Mathf.Abs(car.localScale.y) - Mathf.Abs(place.localScale.y)) <= SizeTolerance;
@@ -56,7 +58,7 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
         if (!sizeCorrect || !rotationCorrect || !flipCorrect || !IsSameVisualDirection(car, place))
             return;
 
-        gameObjectsScript.inRightPlace = true;
+        if (gameObjectsScript != null) gameObjectsScript.inRightPlace = true;
 
         car.position = place.position;
         car.localScale = place.localScale;
@@ -82,114 +84,98 @@ public class DropPlaceScript : MonoBehaviour, IDropHandler
             place.TransformVector(Vector3.right)) <= AngleTolerance;
     }
 
+    private void PlaySound(int index)
+    {
+        if (gameObjectsScript == null || gameObjectsScript.carSoundSource == null ||
+            gameObjectsScript.sounds == null || index < 0 || index >= gameObjectsScript.sounds.Length ||
+            gameObjectsScript.sounds[index] == null) return;
+        gameObjectsScript.carSoundSource.PlayOneShot(gameObjectsScript.sounds[index]);
+    }
+
     private void PlayCorrectSound(string objectTag)
     {
         switch (objectTag)
         {
             case "Garbage":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[1]
-                );
+                PlaySound(1);
 
                 break;
 
 
             case "Ambulance":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[2]
-                );
+                PlaySound(2);
 
                 break;
 
 
             case "School":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[3]
-                );
+                PlaySound(3);
 
                 break;
 
 
             case "Cement":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[4]
-                );
+                PlaySound(4);
 
                 break;
 
 
             case "Ugunsdzeseji":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[5]
-                );
+                PlaySound(5);
 
                 break;
 
 
             case "e61":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[6]
-                );
+                PlaySound(6);
 
                 break;
 
 
             case "e46":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[7]
-                );
+                PlaySound(7);
 
                 break;
 
 
             case "viegla":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[8]
-                );
+                PlaySound(8);
 
                 break;
 
 
             case "Eskavators":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[9]
-                );
+                PlaySound(9);
 
                 break;
 
 
             case "Traktors_Dzeltens":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[9]
-                );
+                PlaySound(9);
 
                 break;
 
 
             case "Traktors_Zals":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[10]
-                );
+                PlaySound(10);
 
                 break;
 
 
             case "Policija":
 
-                gameObjectsScript.carSoundSource.PlayOneShot(
-                    gameObjectsScript.sounds[11]
-                );
+                PlaySound(11);
 
                 break;
 

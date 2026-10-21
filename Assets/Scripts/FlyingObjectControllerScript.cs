@@ -25,6 +25,9 @@ public class FlyingObjectControllerScript : MonoBehaviour
     private readonly Vector3[] worldCorners = new Vector3[4];
     private readonly Vector2[] screenCorners = new Vector2[4];
     private static readonly List<RaycastResult> uiHits = new List<RaycastResult>();
+    private static PointerEventData pointerData;
+    private static EventSystem pointerEventSystem;
+    private Canvas parentCanvas;
 
     private bool GameEnded => gameManager != null && gameManager.GameEnded;
 
@@ -34,6 +37,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
         if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
         rectTransform = GetComponent<RectTransform>();
         image = GetComponent<Image>();
+        parentCanvas = GetComponentInParent<Canvas>();
         if (image != null) originalColor = image.color;
         gameObjectsScript = FindFirstObjectByType<GameObjectsScript>();
         screenBounderiesScript = FindFirstObjectByType<ScreenBounderiesScript>();
@@ -78,7 +82,13 @@ public class FlyingObjectControllerScript : MonoBehaviour
         if (!GameObjectsScript.isDragging && (!CompareTag("Bomb") || isExploading)) return;
 
         Vector2 pointer;
-        if (!TryGetInputPosition(out pointer) || !IsValidScreenPosition(pointer)) return;
+        GameObject selected = GameObjectsScript.lastDragged;
+        if (GameObjectsScript.isDragging && selected != null && selected.TryGetComponent(out DragAndDropScript drag))
+        {
+            if (!drag.TryGetDragPointer(out pointer)) return;
+        }
+        else if (!TryGetInputPosition(out pointer)) return;
+        if (!IsValidScreenPosition(pointer)) return;
         if (IsTouchOnButton(pointer)) return;
 
         // Important Android fix: NEVER use RectangleContainsScreenPoint here.
@@ -95,6 +105,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
             GameObject dragged = GameObjectsScript.lastDragged;
             if (dragged != null)
             {
+                if (dragged.TryGetComponent(out DragAndDropScript draggedCar)) draggedCar.BeginDestruction();
                 GameObjectsScript.lastDragged = null;
                 GameObjectsScript.isDragging = false;
                 StartCoroutine(ShrinkAndDestroy(dragged, 0.5f));
@@ -106,7 +117,7 @@ public class FlyingObjectControllerScript : MonoBehaviour
     private bool IsPointInsideProjectedRect(Vector2 pointer)
     {
         if (rectTransform == null) return false;
-        Canvas canvas = GetComponentInParent<Canvas>();
+        Canvas canvas = parentCanvas;
         Camera uiCamera = null;
         if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
             uiCamera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
@@ -116,13 +127,20 @@ public class FlyingObjectControllerScript : MonoBehaviour
         rectTransform.GetWorldCorners(worldCorners);
         for (int i = 0; i < 4; i++)
         {
-            Vector3 point = RectTransformUtility.WorldToScreenPoint(uiCamera, worldCorners[i]);
+            Vector3 point = uiCamera != null ? uiCamera.WorldToScreenPoint(worldCorners[i]) : worldCorners[i];
             if (!IsFinite(point) || (uiCamera != null &&
                 uiCamera.orthographic == false && point.z <= 0f)) return false;
             screenCorners[i] = new Vector2(point.x, point.y);
         }
 
         bool positive = false, negative = false;
+        float area = 0f;
+        for (int i = 0; i < 4; i++)
+        {
+            Vector2 a = screenCorners[i], b = screenCorners[(i + 1) % 4];
+            area += a.x * b.y - b.x * a.y;
+        }
+        if (Mathf.Abs(area) < .01f) return false;
         for (int i = 0; i < 4; i++)
         {
             Vector2 a = screenCorners[i];
@@ -175,9 +193,15 @@ public class FlyingObjectControllerScript : MonoBehaviour
     private static bool IsTouchOnButton(Vector2 position)
     {
         if (EventSystem.current == null) return false;
-        var pointer = new PointerEventData(EventSystem.current) { position = position };
+        if (pointerData == null || pointerEventSystem != EventSystem.current)
+        {
+            pointerEventSystem = EventSystem.current;
+            pointerData = new PointerEventData(pointerEventSystem);
+        }
+        pointerData.Reset();
+        pointerData.position = position;
         uiHits.Clear();
-        EventSystem.current.RaycastAll(pointer, uiHits);
+        EventSystem.current.RaycastAll(pointerData, uiHits);
         foreach (RaycastResult hit in uiHits)
         {
             if (hit.gameObject.GetComponentInParent<Button>() != null ||

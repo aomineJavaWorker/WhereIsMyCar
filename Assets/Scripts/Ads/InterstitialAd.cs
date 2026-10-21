@@ -11,6 +11,9 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     public event Action OnInterstitialAdReady;
     public bool isReady = false;
     [SerializeField] Button _interstitialAdButton;
+    private bool loading;
+    private float timeScaleBeforeAd = 1f;
+    private int sceneBeforeAd;
 
     void Awake()
     {
@@ -18,12 +21,10 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     }
 
     // Update is called once per frame
-    private void Update()
+    private void SetReady(bool ready)
     {
-        if(AdManager.Instance != null && AdManager.Instance.interstitialAd != null)
-        {
-            _interstitialAdButton.interactable = AdManager.Instance.interstitialAd.isReady;
-        }
+        isReady = ready;
+        if (_interstitialAdButton != null) _interstitialAdButton.interactable = ready;
     }
 
     // 
@@ -35,7 +36,7 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     }
     public void ShowInterstitial()
     {
-        if(AdManager.Instance.interstitialAd != null && AdManager.Instance.interstitialAd.isReady)
+        if(isReady)
         {
             Debug.Log("Showing interstitial ad manually!");
             ShowAd();
@@ -51,9 +52,10 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     {
         if (isReady)
         {
-
+            timeScaleBeforeAd = Time.timeScale;
+            sceneBeforeAd = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
+            SetReady(false);
             Advertisement.Show(_adUnitId, this);
-            isReady = false;
         }else
         {
             Debug.LogWarning("Interstitial ad is not ready yet!");
@@ -62,26 +64,29 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
 
     public void LoadAd()
     {
+        if (loading || isReady) return;
         if (!Advertisement.isInitialized)
         {
             Debug.LogWarning("Tried to load interstitial ad before Unity Ads was intialized!");
             return;
         }
         Debug.Log("Loading interstitial ad...");
+        loading = true;
         Advertisement.Load(_adUnitId, this);
     }
     public void OnUnityAdsAdLoaded(string placementId)
     {
         Debug.Log("Interstitial ad loaded succesfully!");
-        _interstitialAdButton.interactable = true;
-        isReady = true;
+        loading = false;
+        SetReady(true);
         OnInterstitialAdReady?.Invoke();
     }
 
     public void OnUnityAdsFailedToLoad(string placementId, UnityAdsLoadError error, string message)
     {
         Debug.LogError($"Failed to load interstitial ad: {error.ToString()} - {message}");
-        LoadAd();
+        loading = false;
+        SetReady(false);
     }
 
     public void OnUnityAdsShowClick(string placementId)
@@ -100,7 +105,7 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
         else
         {
             Debug.LogWarning($"interstitial ad was not completed: {showCompletionState.ToString()}");
-            Time.timeScale = 1f;
+            RestoreTime();
             LoadAd();
         }
 
@@ -108,15 +113,19 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
 
     private IEnumerator SlowDownTImeTemporarily(float duration)
     {
+        GameManager manager = FindFirstObjectByType<GameManager>();
+        int scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
+        if (manager == null || manager.GameEnded || scene != sceneBeforeAd) { RestoreTime(); yield break; }
         Time.timeScale = 0.3f;
         Debug.Log("Time slowed down for " + duration + " seconds.");
-        yield return new WaitForSeconds(duration);
-        Time.timeScale = 1f;
+        yield return new WaitForSecondsRealtime(duration);
+        if (scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle) RestoreTime();
         Debug.Log("Time restored to normal.");
     }
 
     public void OnUnityAdsShowFailure(string placementId, UnityAdsShowError error, string message)
     {
+        RestoreTime();
         Debug.LogError($"Failed to show interstitial ad: {error.ToString()} - {message}");
         LoadAd();
     }
@@ -129,12 +138,27 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
 
     public void SetButton(Button button)
     {
+        if (_interstitialAdButton != null)
+            _interstitialAdButton.onClick.RemoveListener(OnInterstitialAdButtonClicked);
+        _interstitialAdButton = button;
         if (button == null)
             return;
-        button.onClick.RemoveAllListeners();
+        button.onClick.RemoveListener(OnInterstitialAdButtonClicked);
+        // Keep Inspector callbacks (sounds and other existing effects).
+        bool linkedInInspector = false;
+        for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            linkedInInspector |= button.onClick.GetPersistentTarget(i) == this;
+        if (!linkedInInspector)
         button.onClick.AddListener(OnInterstitialAdButtonClicked);
-        _interstitialAdButton = button;
-        _interstitialAdButton.interactable = false;
+        _interstitialAdButton.interactable = isReady;
+    }
+
+    private void RestoreTime()
+    {
+        GameManager manager = FindFirstObjectByType<GameManager>();
+        if (manager != null && manager.GameEnded) Time.timeScale = 0f;
+        else if (sceneBeforeAd == UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle)
+            Time.timeScale = timeScaleBeforeAd;
     }
 
 

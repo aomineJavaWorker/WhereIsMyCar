@@ -28,14 +28,27 @@ public class AdManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        adsInitializer.OnAdsInitialized += HandleAdsInitialized;
+        if (interstitialAd == null) interstitialAd = FindFirstObjectByType<InterstitialAd>();
+        if (adsInitializer != null) adsInitializer.OnAdsInitialized += HandleAdsInitialized;
+        if (interstitialAd != null) interstitialAd.OnInterstitialAdReady += HandleInterstitialReady;
+    }
+
+    private void Start()
+    {
+        if (UnityEngine.Advertisements.Advertisement.isInitialized) HandleAdsInitialized();
+    }
+
+    private void OnDestroy()
+    {
+        if (adsInitializer != null) adsInitializer.OnAdsInitialized -= HandleAdsInitialized;
+        if (interstitialAd != null) interstitialAd.OnInterstitialAdReady -= HandleInterstitialReady;
+        if (Instance == this) Instance = null;
     }
 
     private void HandleAdsInitialized()
     {
-        if (!turnOffInterstitialAds)
+        if (!turnOffInterstitialAds && interstitialAd != null)
         {
-            interstitialAd.OnInterstitialAdReady += HandleInterstitialReady;
             interstitialAd.LoadAd();
         }
 
@@ -71,9 +84,9 @@ public class AdManager : MonoBehaviour
         if (interstitialAd == null)
             interstitialAd = FindAnyObjectByType<InterstitialAd>();
 
-        Button interstitialButton =
-            GameObject.FindGameObjectWithTag("HandleAdsInitialized").GetComponent<Button>();
-        if (interstitialAd != null && interstitialButton != null)
+        GameObject buttonObject = GameObject.FindGameObjectWithTag("InterstitialAdButton");
+        Button interstitialButton = buttonObject != null ? buttonObject.GetComponent<Button>() : null;
+        if (interstitialAd != null)
         {
             interstitialAd.SetButton(interstitialButton);
         }

@@ -39,7 +39,7 @@ public class ObjectTransformationScript : MonoBehaviour
         }
 
         DragAndDropScript drag = selected.GetComponent<DragAndDropScript>();
-        if (drag != null && drag.isPlaced)
+        if (drag != null && (drag.isPlaced || drag.IsBeingDestroyed))
         {
             ResetControls();
             return;
@@ -67,6 +67,7 @@ public class ObjectTransformationScript : MonoBehaviour
         if (shrinkX) scale.x = ResizeSignedScale(scale.x, -scaleSpeed * dt);
         if (Input.GetKeyDown(KeyCode.Space)) scale.x = -scale.x;
         car.localScale = scale;
+        if (isTransforming && drag != null) drag.ClampToMap();
     }
 
     // These existing public methods are retained for old Unity EventTrigger links.
@@ -89,7 +90,7 @@ public class ObjectTransformationScript : MonoBehaviour
         GameObject selected = GameObjectsScript.lastDragged;
         if (selected == null) return;
         DragAndDropScript drag = selected.GetComponent<DragAndDropScript>();
-        if (drag != null && drag.isPlaced) return;
+        if (drag != null && (drag.isPlaced || drag.IsBeingDestroyed)) return;
         RectTransform car = selected.GetComponent<RectTransform>();
         if (car == null) return;
         Vector3 scale = car.localScale;
@@ -113,4 +114,6 @@ public class ObjectTransformationScript : MonoBehaviour
     }
 
     private void OnDisable() => ResetControls();
+    private void OnApplicationFocus(bool focused) { if (!focused) ResetControls(); }
+    private void OnApplicationPause(bool paused) { if (paused) ResetControls(); }
 }

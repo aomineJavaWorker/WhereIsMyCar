@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
@@ -80,42 +80,48 @@ public class GameObjectsScript : MonoBehaviour
         SpawnDropPlacesRandomly();
        
         garbageTruckCoord =
-            garbageTruck.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(garbageTruck);
 
         AmbulanceCoord =
-            Ambulance.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Ambulance);
 
         schoolBusCoord =
-            schoolBus.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(schoolBus);
 
         CementCoord =
-            Cement.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Cement);
 
         UgunsdzesejiCoord =
-            Ugunsdzeseji.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Ugunsdzeseji);
 
         e61Coord =
-            e61.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(e61);
 
         e46Coord =
-            e46.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(e46);
 
         VieglaCoord =
-            Viegla.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Viegla);
 
         EskavatorsCoord =
-            Eskavators.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Eskavators);
 
         Traktors_dzeltensCoord =
-            Traktors_dzeltens.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Traktors_dzeltens);
 
         Traktors_ZalsCoord =
-            Traktors_Zals.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Traktors_Zals);
 
         PolicijaCoord =
-            Policija.GetComponent<RectTransform>().localPosition;
+            GetVehiclePosition(Policija);
     }
 
+
+    private static Vector2 GetVehiclePosition(GameObject vehicle)
+    {
+        return vehicle != null && vehicle.TryGetComponent(out RectTransform rect)
+            ? (Vector2)rect.localPosition : Vector2.zero;
+    }
 
     private void ConfigureDropRaycaster()
     {
@@ -142,7 +148,14 @@ public class GameObjectsScript : MonoBehaviour
 
         // Izveidojam kopiju prieks SpawnPoint, lai viens punkts neatkartojas vairak rezes
         List<RectTransform> availablePoints =
-            new List<RectTransform>(spawnPoints);
+            new List<RectTransform>();
+        foreach (RectTransform point in spawnPoints)
+            if (point != null && !availablePoints.Contains(point)) availablePoints.Add(point);
+        if (availablePoints.Count < dropPlaces.Length)
+        {
+            Debug.LogError("Not enough unique, non-null spawn points.");
+            return;
+        }
 
 
         foreach (RectTransform dropPlace in dropPlaces)
