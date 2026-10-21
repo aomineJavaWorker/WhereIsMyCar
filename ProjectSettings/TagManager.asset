@@ -17,6 +17,7 @@ TagManager:
   - Traktors_Zals
   - Ugunsdzeseji
   - Bomb
+  - InterstitialAdButton
   layers:
   - Default
   - TransparentFX

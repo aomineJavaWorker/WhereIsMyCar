@@ -3262,7 +3262,7 @@ GameObject:
   - component: {fileID: 647656950}
   m_Layer: 5
   m_Name: InterestialAd
-  m_TagString: Untagged
+  m_TagString: InterstitialAdButton
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
