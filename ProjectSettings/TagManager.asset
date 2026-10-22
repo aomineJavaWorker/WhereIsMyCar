@@ -19,6 +19,7 @@ TagManager:
   - Bomb
   - InterstitialAdButton
   - RewardedAdButton
+  - BannerAdButton
   layers:
   - Default
   - TransparentFX

@@ -12,7 +12,12 @@ public class AdManager : MonoBehaviour
     public RewardedAds rewardedAds;
     [SerializeField] bool turnOffRewardedAds = false;
 
+    public BannerAd bannerAd;
+    [SerializeField] bool turnOffBannerAds = false;
+
     private bool firstSceneLoaded = false;
+
+
 
     public static AdManager Instance { get; private set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -57,6 +62,11 @@ public class AdManager : MonoBehaviour
         if (!turnOffRewardedAds)
         {
             rewardedAds.LoadAd();
+        }
+
+        if (!turnOffBannerAds)
+        {
+            bannerAd.LoadBanner();
         }
         //Velak
     }
@@ -107,6 +117,13 @@ public class AdManager : MonoBehaviour
             rewardedAds.SetButton(rewardedAdBitton);
         }
         //velak
+
+        Button bannerAdButton = GameObject.FindGameObjectWithTag("BannerAdButton").GetComponent<Button>();
+
+        if (bannerAd != null && bannerAdButton != null)
+        {
+            bannerAd.SetButton(bannerAdButton);
+        }
         if (!firstSceneLoaded)
         {
             firstSceneLoaded = true;

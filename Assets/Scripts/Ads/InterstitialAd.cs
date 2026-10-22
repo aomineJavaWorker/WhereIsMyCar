@@ -52,6 +52,8 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     {
         if (isReady)
         {
+            if (AdManager.Instance.bannerAd.isBannerVisible)
+                AdManager.Instance.bannerAd.HideBannerAd();
             timeScaleBeforeAd = Time.timeScale;
             sceneBeforeAd = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
             SetReady(false);
