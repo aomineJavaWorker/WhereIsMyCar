@@ -1473,9 +1473,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 379877242}
-  - component: {fileID: 379877241}
   - component: {fileID: 379877244}
+  - component: {fileID: 379877241}
   - component: {fileID: 379877243}
+  - component: {fileID: 379877245}
+  - component: {fileID: 379877246}
   m_Layer: 0
   m_Name: AdsScriptHolder
   m_TagString: Untagged
@@ -1524,7 +1526,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08ebe85eaf9042240a2ff91f4456aec5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _androidAdUnityId: Interstitial_Android
+  _androidAdUnityId: BP_Interstitial_Android
   isReady: 0
   _interstitialAdButton: {fileID: 647656950}
 --- !u!114 &379877244
@@ -1541,7 +1543,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   adsInitializer: {fileID: 379877241}
   interstitialAd: {fileID: 379877243}
-  turnOffInterstitialAds: 0
+  turnOffInterstitialAds: 1
+  rewardedAds: {fileID: 379877245}
+  turnOffRewardedAds: 0
+--- !u!114 &379877245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 379877240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55fc7710909db9f47b3a6453825ba354, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _androidAdUnitId: BP_Rewarded_Android
+  _rewardedAdButton: {fileID: 835534202}
+  FlyingObjectManager: {fileID: 379877246}
+--- !u!114 &379877246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 379877240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b09982dc095ad44b02606d90214930, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &386127318
 GameObject:
   m_ObjectHideFlags: 0
@@ -4437,7 +4468,7 @@ GameObject:
   - component: {fileID: 835534202}
   m_Layer: 5
   m_Name: RewardedAd
-  m_TagString: Untagged
+  m_TagString: RewardedAdButton
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

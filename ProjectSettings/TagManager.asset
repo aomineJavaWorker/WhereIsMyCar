@@ -18,6 +18,7 @@ TagManager:
   - Ugunsdzeseji
   - Bomb
   - InterstitialAdButton
+  - RewardedAdButton
   layers:
   - Default
   - TransparentFX
