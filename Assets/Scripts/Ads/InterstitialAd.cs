@@ -2,8 +2,8 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Advertisements;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
+
 public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsShowListener
 {
     [SerializeField] string _androidAdUnityId = "Interstitial_Android";
@@ -14,29 +14,29 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     private bool loading;
     private float timeScaleBeforeAd = 1f;
     private int sceneBeforeAd;
+    private bool isShowing;
+    private BannerAd activeBanner;
 
     void Awake()
     {
         _adUnitId = _androidAdUnityId;
     }
 
-    // Update is called once per frame
     private void SetReady(bool ready)
     {
         isReady = ready;
         if (_interstitialAdButton != null) _interstitialAdButton.interactable = ready;
     }
 
-    // 
-
     public void OnInterstitialAdButtonClicked()
     {
         Debug.Log("Interstitial Ad Button Clicked");
         ShowInterstitial();
     }
+
     public void ShowInterstitial()
     {
-        if(isReady)
+        if (isReady)
         {
             Debug.Log("Showing interstitial ad manually!");
             ShowAd();
@@ -50,18 +50,30 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
 
     public void ShowAd()
     {
-        if (isReady)
+        if (!isReady || isShowing || !Advertisement.isInitialized)
         {
-            if (AdManager.Instance.bannerAd.isBannerVisible)
-                AdManager.Instance.bannerAd.HideBannerAd();
-            timeScaleBeforeAd = Time.timeScale;
-            sceneBeforeAd = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
-            SetReady(false);
-            Advertisement.Show(_adUnitId, this);
-        }else
-        {
-            Debug.LogWarning("Interstitial ad is not ready yet!");
+            Debug.LogWarning("Interstitial ad is not ready yet or already showing.");
+            return;
         }
+
+        activeBanner = AdManager.Instance != null
+            ? AdManager.Instance.bannerAd : FindFirstObjectByType<BannerAd>();
+        if (activeBanner != null && activeBanner.IsFullscreenAdActive)
+        {
+            Debug.Log("Interstitial ad: another fullscreen ad is active; delaying show.");
+            return;
+        }
+
+        // Block the banner BEFORE asking the SDK to open the fullscreen ad.
+        if (activeBanner != null)
+            activeBanner.BeginInterstitial();
+
+        isShowing = true;
+        timeScaleBeforeAd = Time.timeScale;
+        sceneBeforeAd = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
+        SetReady(false);
+        Debug.Log("Interstitial ad: opening fullscreen advertisement.");
+        Advertisement.Show(_adUnitId, this);
     }
 
     public void LoadAd()
@@ -69,16 +81,18 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
         if (loading || isReady) return;
         if (!Advertisement.isInitialized)
         {
-            Debug.LogWarning("Tried to load interstitial ad before Unity Ads was intialized!");
+            Debug.LogWarning("Tried to load interstitial ad before Unity Ads was initialized!");
             return;
         }
         Debug.Log("Loading interstitial ad...");
         loading = true;
         Advertisement.Load(_adUnitId, this);
     }
+
     public void OnUnityAdsAdLoaded(string placementId)
     {
-        Debug.Log("Interstitial ad loaded succesfully!");
+        if (placementId != _adUnitId) return;
+        Debug.Log("Interstitial ad loaded successfully!");
         loading = false;
         SetReady(true);
         OnInterstitialAdReady?.Invoke();
@@ -86,7 +100,8 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
 
     public void OnUnityAdsFailedToLoad(string placementId, UnityAdsLoadError error, string message)
     {
-        Debug.LogError($"Failed to load interstitial ad: {error.ToString()} - {message}");
+        if (placementId != _adUnitId) return;
+        Debug.LogError($"Failed to load interstitial ad: {error} - {message}");
         loading = false;
         SetReady(false);
     }
@@ -98,42 +113,54 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
 
     public void OnUnityAdsShowComplete(string placementId, UnityAdsShowCompletionState showCompletionState)
     {
+        if (placementId != _adUnitId) return;
+
         if (showCompletionState == UnityAdsShowCompletionState.COMPLETED)
         {
-            Debug.Log("Interstitial ad completed succesfully!");
+            Debug.Log("Interstitial ad completed successfully!");
             StartCoroutine(SlowDownTImeTemporarily(30f));
-            LoadAd();
         }
         else
         {
-            Debug.LogWarning($"interstitial ad was not completed: {showCompletionState.ToString()}");
+            Debug.LogWarning($"Interstitial ad was not completed: {showCompletionState}");
             RestoreTime();
-            LoadAd();
         }
 
+        isShowing = false;
+        RestoreBannerAfterInterstitial();
+        LoadAd();
     }
 
     private IEnumerator SlowDownTImeTemporarily(float duration)
     {
         GameManager manager = FindFirstObjectByType<GameManager>();
         int scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle;
-        if (manager == null || manager.GameEnded || scene != sceneBeforeAd) { RestoreTime(); yield break; }
+        if (manager == null || manager.GameEnded || scene != sceneBeforeAd)
+        {
+            RestoreTime();
+            yield break;
+        }
         Time.timeScale = 0.3f;
         Debug.Log("Time slowed down for " + duration + " seconds.");
         yield return new WaitForSecondsRealtime(duration);
-        if (scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle) RestoreTime();
+        if (scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle)
+            RestoreTime();
         Debug.Log("Time restored to normal.");
     }
 
     public void OnUnityAdsShowFailure(string placementId, UnityAdsShowError error, string message)
     {
+        if (placementId != _adUnitId) return;
         RestoreTime();
-        Debug.LogError($"Failed to show interstitial ad: {error.ToString()} - {message}");
+        isShowing = false;
+        RestoreBannerAfterInterstitial();
+        Debug.LogError($"Failed to show interstitial ad: {error} - {message}");
         LoadAd();
     }
 
     public void OnUnityAdsShowStart(string placementId)
     {
+        if (placementId != _adUnitId) return;
         Debug.Log("Interstitial ad started showing!");
         Time.timeScale = 0f;
     }
@@ -142,17 +169,27 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
     {
         if (_interstitialAdButton != null)
             _interstitialAdButton.onClick.RemoveListener(OnInterstitialAdButtonClicked);
+
         _interstitialAdButton = button;
-        if (button == null)
-            return;
-        button.onClick.RemoveListener(OnInterstitialAdButtonClicked);
-        // Keep Inspector callbacks (sounds and other existing effects).
+        if (button == null) return;
+
         bool linkedInInspector = false;
         for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
             linkedInInspector |= button.onClick.GetPersistentTarget(i) == this;
+
         if (!linkedInInspector)
-        button.onClick.AddListener(OnInterstitialAdButtonClicked);
+            button.onClick.AddListener(OnInterstitialAdButtonClicked);
+
         _interstitialAdButton.interactable = isReady;
+    }
+
+    private void RestoreBannerAfterInterstitial()
+    {
+        if (activeBanner != null)
+        {
+            activeBanner.EndInterstitial();
+            activeBanner = null;
+        }
     }
 
     private void RestoreTime()
@@ -162,7 +199,4 @@ public class InterstitialAd : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsSho
         else if (sceneBeforeAd == UnityEngine.SceneManagement.SceneManager.GetActiveScene().handle)
             Time.timeScale = timeScaleBeforeAd;
     }
-
-
-
 }
