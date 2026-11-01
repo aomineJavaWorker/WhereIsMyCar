@@ -7,6 +7,7 @@ using UnityEngine.UI;
 // After finishing, destroy flying objects and allow another ad after 15 real seconds.
 public class RewardedAds : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsShowListener
 {
+    public event System.Action RewardGranted;
     // Preserve these serialized names, since CityScene already contains their values.
     [Header("Unity Ads")]
     [SerializeField] private string _androidAdUnitId = "BP_Rewarded_Android";
@@ -211,6 +212,8 @@ public class RewardedAds : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsShowLi
             FlyingObjectManager.DestroyAllFlyingObjects();
         else
             Debug.LogWarning("RewardedAds: FlyingObjectManager missing. No reward applied.");
+
+        RewardGranted?.Invoke();
     }
 
     private void BeginCooldown()

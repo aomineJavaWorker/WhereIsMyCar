@@ -47,7 +47,7 @@ public class BannerAd : MonoBehaviour
         }
         _instance = this;
         _adUnitId = _AndroidAdUnitId;
-        _isGameplayScene = SceneManager.GetActiveScene().name == "CityScene";
+        _isGameplayScene = SceneManager.GetActiveScene().name == "CityScene" || SceneManager.GetActiveScene().name == "HanojasTornis";
         Advertisement.Banner.SetPosition(bannerPosition);
     }
 
@@ -72,7 +72,7 @@ public class BannerAd : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        _isGameplayScene = scene.name == "CityScene";
+        _isGameplayScene = scene.name == "CityScene" || scene.name == "HanojasTornis";
         if (!_isGameplayScene)
         {
             HideNativeBanner();
