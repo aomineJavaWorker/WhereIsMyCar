@@ -96,10 +96,21 @@ public class HanojasTornis : MonoBehaviour
 
     private void SetDefaultHint() => hintText.text = "Pārvieto visus diskus uz 3. stieni. Nospied disku, tad stieni.";
 
+
     public void RefreshDisks()
     {
-        float column = board.rect.width / 3f;
-        float height = Mathf.Min(72f, board.rect.height * .115f);
+        // Original background dimensions: 1280x600
+        float scale = Mathf.Min(
+            board.rect.width / 1280f,
+            board.rect.height / 600f
+        );
+
+        // Rod positions in the teacher's background image.
+        float[] rodX = { 0.195f, 0.528f, 0.855f };
+
+        float diskHeight = 69f * scale;
+        float bottomY = board.rect.height * 0.06f;
+
         for (int rod = 0; rod < 3; rod++)
         {
             for (int level = 0; level < puzzle.Count(rod); level++)
@@ -107,16 +118,39 @@ public class HanojasTornis : MonoBehaviour
                 int disk = puzzle.DiskAt(rod, level);
                 Image image = disks[disk - 1];
                 RectTransform rect = image.rectTransform;
-                bool selected = rod == selectedRod && disk == puzzle.Top(rod);
-                rect.anchorMin = rect.anchorMax = new Vector2((rod + .5f) / 3f, 0f);
-                rect.pivot = new Vector2(.5f, .5f);
-                rect.sizeDelta = new Vector2(column * (.30f + disk * .145f), height);
-                rect.anchoredPosition = new Vector2(0f, board.rect.height * .17f +
-                    (level + .5f) * (height + 6f) + (selected ? height * .28f : 0f));
+
+                bool selected =
+                    rod == selectedRod &&
+                    disk == puzzle.Top(rod);
+
+                rect.anchorMin = new Vector2(rodX[rod], 0f);
+                rect.anchorMax = rect.anchorMin;
+                rect.pivot = new Vector2(0.5f, 0.5f);
+
+                // Preserve the original sprite proportions.
+                if (image.sprite != null)
+                {
+                    rect.sizeDelta = new Vector2(
+                        image.sprite.rect.width * scale,
+                        image.sprite.rect.height * scale
+                    );
+                }
+
+                float y = bottomY +
+                          (level + 0.5f) * diskHeight;
+
+                if (selected)
+                    y += diskHeight * 0.25f;
+
+                rect.anchoredPosition = new Vector2(0f, y);
+
                 Outline outline = image.GetComponent<Outline>();
-                if (outline != null) outline.enabled = selected;
+                if (outline != null)
+                    outline.enabled = selected;
             }
         }
+
         lastBoardSize = board.rect.size;
     }
+
 }
