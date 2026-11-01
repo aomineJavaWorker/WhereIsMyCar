@@ -47,7 +47,7 @@ public class BannerAd : MonoBehaviour
         }
         _instance = this;
         _adUnitId = _AndroidAdUnitId;
-        _isGameplayScene = SceneManager.GetActiveScene().name != "MainMenu";
+        _isGameplayScene = SceneManager.GetActiveScene().name == "CityScene";
         Advertisement.Banner.SetPosition(bannerPosition);
     }
 
@@ -72,11 +72,11 @@ public class BannerAd : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        _isGameplayScene = scene.name != "MainMenu";
+        _isGameplayScene = scene.name == "CityScene";
         if (!_isGameplayScene)
         {
             HideNativeBanner();
-            Debug.Log("BannerAd: Hidden in MainMenu.");
+            Debug.Log("BannerAd: Hidden in " + scene.name + ".");
             return;
         }
 

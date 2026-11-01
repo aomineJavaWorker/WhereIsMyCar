@@ -26,7 +26,7 @@ public class MainMenu : MonoBehaviour
         GameObject safe = new GameObject("MenuSafeArea", typeof(RectTransform), typeof(MobileUISafeArea));
         safe.transform.SetParent(menuCanvas.transform, false);
         safeArea = safe.GetComponent<RectTransform>();
-        string[] names = { "TitleText", "SubtitleText", "StartButton", "ExitButton" };
+        string[] names = { "TitleText", "SubtitleText", "StartButton", "HanojasButton", "ExitButton" };
         foreach (string name in names)
         {
             Transform item = menuCanvas.transform.Find(name);
@@ -62,8 +62,9 @@ public class MainMenu : MonoBehaviour
         bool portrait = Screen.height > Screen.width;
         PlaceMenuItem("TitleText", .83f, .90f, 140f, 76f);
         PlaceMenuItem("SubtitleText", .71f, .88f, 100f, 34f);
-        PlaceMenuItem("StartButton", portrait ? .51f : .50f, .70f, 140f, 50f);
-        PlaceMenuItem("ExitButton", portrait ? .36f : .32f, .70f, 140f, 50f);
+        PlaceMenuItem("StartButton", portrait ? .54f : .53f, .70f, 156f, 50f);
+        PlaceMenuItem("HanojasButton", portrait ? .38f : .36f, .70f, 156f, 50f);
+        PlaceMenuItem("ExitButton", portrait ? .22f : .19f, .70f, 156f, 50f);
         lastSize = new Vector2Int(Screen.width, Screen.height);
         lastSafe = Screen.safeArea;
     }
@@ -75,8 +76,9 @@ public class MainMenu : MonoBehaviour
         item.anchorMin = item.anchorMax = new Vector2(.5f, y);
         item.pivot = new Vector2(.5f, .5f);
         item.anchoredPosition3D = Vector3.zero;
+        float heightFraction = item.GetComponent<Button>() != null ? .145f : .12f;
         item.sizeDelta = new Vector2(Mathf.Min(1000f, safeArea.rect.width * widthFraction),
-            Mathf.Min(height, safeArea.rect.height * .12f));
+            Mathf.Min(height, safeArea.rect.height * heightFraction));
         item.localScale = Vector3.one;
         TMP_Text text = item.GetComponentInChildren<TMP_Text>();
         if (text != null)
@@ -99,6 +101,12 @@ public class MainMenu : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void StartHanojasTornis()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("HanojasTornis");
     }
 
     public void ExitGame()

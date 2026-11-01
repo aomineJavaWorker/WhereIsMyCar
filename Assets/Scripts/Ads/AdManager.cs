@@ -3,6 +3,7 @@ using UnityEngine.Advertisements;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+[DefaultExecutionOrder(-100)]
 public class AdManager : MonoBehaviour
 {
     [Header("Ads components")]
@@ -26,6 +27,8 @@ public class AdManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            // Stop duplicate SDK components before their Awake/Start can run.
+            gameObject.SetActive(false);
             Destroy(gameObject);
             return;
         }
