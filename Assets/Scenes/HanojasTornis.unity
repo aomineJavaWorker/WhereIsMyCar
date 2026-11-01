@@ -625,6 +625,7 @@ GameObject:
   - component: {fileID: 145642722}
   - component: {fileID: 145642720}
   - component: {fileID: 145642721}
+  - component: {fileID: 145642724}
   m_Layer: 0
   m_Name: Disk1
   m_TagString: Untagged
@@ -646,7 +647,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -705,6 +706,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 280.68604}
   m_SizeDelta: {x: 198.648, y: 52.164005}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &145642724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145642719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59624e8eabdaf334b8ac956df8bc6dcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diskNumber: 1
 --- !u!1 &153149678
 GameObject:
   m_ObjectHideFlags: 0
@@ -1175,19 +1189,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 367547267}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 831269209}
-        m_TargetAssemblyTypeName: HanojasTornis, Assembly-CSharp
-        m_MethodName: SelectRod
-        m_Mode: 3
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 2
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &367547267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1548,6 +1550,7 @@ GameObject:
   - component: {fileID: 672256214}
   - component: {fileID: 672256212}
   - component: {fileID: 672256213}
+  - component: {fileID: 672256216}
   m_Layer: 0
   m_Name: Disk2
   m_TagString: Untagged
@@ -1569,7 +1572,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1628,6 +1631,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 222.52202}
   m_SizeDelta: {x: 263.376, y: 52.164005}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &672256216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 672256211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59624e8eabdaf334b8ac956df8bc6dcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diskNumber: 2
 --- !u!1 &719470258
 GameObject:
   m_ObjectHideFlags: 0
@@ -1640,6 +1656,7 @@ GameObject:
   - component: {fileID: 719470261}
   - component: {fileID: 719470259}
   - component: {fileID: 719470260}
+  - component: {fileID: 719470263}
   m_Layer: 0
   m_Name: Disk3
   m_TagString: Untagged
@@ -1661,13 +1678,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 8105155412979827939, guid: 23566e8e076a6ec4d82bba8f7eb9758c, type: 3}
+  m_Sprite: {fileID: 8955624718293995391, guid: e91e1c678afbe8d4a98a8d9c96f542e6, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1720,6 +1737,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 164.35802}
   m_SizeDelta: {x: 328.104, y: 52.164005}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &719470263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 719470258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59624e8eabdaf334b8ac956df8bc6dcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diskNumber: 3
 --- !u!114 &803527591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2721,6 +2751,7 @@ GameObject:
   - component: {fileID: 934706418}
   - component: {fileID: 934706420}
   - component: {fileID: 934706419}
+  - component: {fileID: 934706421}
   m_Layer: 0
   m_Name: Board
   m_TagString: Untagged
@@ -2750,7 +2781,7 @@ RectTransform:
   m_Father: {fileID: 317193198}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2792,6 +2823,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 934706417}
   m_CullTransparentMesh: 1
+--- !u!114 &934706421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934706417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 3
+  m_AspectRatio: 2.133333
 --- !u!1 &1004568172
 GameObject:
   m_ObjectHideFlags: 0
@@ -3110,19 +3155,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1109371558}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 831269209}
-        m_TargetAssemblyTypeName: HanojasTornis, Assembly-CSharp
-        m_MethodName: SelectRod
-        m_Mode: 3
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1109371558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4159,6 +4192,7 @@ GameObject:
   - component: {fileID: 1358504976}
   - component: {fileID: 1358504974}
   - component: {fileID: 1358504975}
+  - component: {fileID: 1358504978}
   m_Layer: 0
   m_Name: Disk4
   m_TagString: Untagged
@@ -4180,13 +4214,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 3103851048805617293, guid: 8bf2ac763e5e4b344a37ad9a28e01a69, type: 3}
+  m_Sprite: {fileID: 8105155412979827939, guid: 23566e8e076a6ec4d82bba8f7eb9758c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4239,6 +4273,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 106.19401}
   m_SizeDelta: {x: 392.832, y: 52.164005}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1358504978
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1358504973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59624e8eabdaf334b8ac956df8bc6dcc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diskNumber: 4
 --- !u!1 &1405005736
 GameObject:
   m_ObjectHideFlags: 0
@@ -5011,19 +5058,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1672964092}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 831269209}
-        m_TargetAssemblyTypeName: HanojasTornis, Assembly-CSharp
-        m_MethodName: SelectRod
-        m_Mode: 3
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 1
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1672964092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5116,9 +5151,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 317193198}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 5, y: 1}
-  m_AnchorMax: {x: 5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -15}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 10422, y: -15}
   m_SizeDelta: {x: 390, y: 55}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1693111047

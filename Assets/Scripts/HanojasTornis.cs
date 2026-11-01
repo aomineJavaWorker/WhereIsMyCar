@@ -94,7 +94,108 @@ public class HanojasTornis : MonoBehaviour
         SceneManager.LoadScene("MainMenu");
     }
 
-    private void SetDefaultHint() => hintText.text = "Pārvieto visus diskus uz 3. stieni. Nospied disku, tad stieni.";
+    private void SetDefaultHint()
+    {
+        hintText.text =
+            "Velc augšējo disku uz citu stieni.";
+    }
+
+
+
+    public bool CanDragDisk(int diskNumber, out int sourceRod)
+    {
+        sourceRod = -1;
+
+        if (puzzle.IsWon || victoryOverlay.activeSelf)
+            return false;
+
+        if (AdManager.Instance != null &&
+            AdManager.Instance.bannerAd != null &&
+            AdManager.Instance.bannerAd.IsFullscreenAdActive)
+            return false;
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (puzzle.Top(i) == diskNumber)
+            {
+                sourceRod = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void DropDraggedDisk(
+        int diskNumber,
+        int sourceRod,
+        Vector2 screenPosition,
+        Camera eventCamera)
+    {
+        bool moved = false;
+
+        if (CanDragDisk(diskNumber, out int currentRod) &&
+            currentRod == sourceRod &&
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                board,
+                screenPosition,
+                eventCamera,
+                out Vector2 localPoint))
+        {
+            Rect bounds = board.rect;
+
+            if (bounds.Contains(localPoint))
+            {
+                float x = (localPoint.x - bounds.xMin) /
+                          bounds.width;
+
+                float y = (localPoint.y - bounds.yMin) /
+                          bounds.height;
+
+                // Accept drops within the playable rod area.
+                if (y >= 0.05f && y <= 0.90f)
+                {
+                    int targetRod =
+                        x < 0.36f ? 0 :
+                        x < 0.69f ? 1 : 2;
+
+                    if (targetRod != sourceRod)
+                    {
+                        moved = puzzle.TryMove(
+                            sourceRod, targetRod
+                        );
+
+                        if (!moved)
+                            hintText.text =
+                                "Lielāku disku nevar likt uz mazāka.";
+                    }
+                }
+            }
+        }
+
+        selectedRod = -1;
+
+        if (moved)
+        {
+            movesText.text = "Gājieni: " + puzzle.Moves;
+            SetDefaultHint();
+
+            if (puzzle.IsWon)
+            {
+                victoryMovesText.text =
+                    "Gājieni: " + puzzle.Moves +
+                    "\nMinimums: 15";
+
+                victoryOverlay.SetActive(true);
+                victoryOverlay.transform.SetAsLastSibling();
+
+                foreach (Button button in rods)
+                    button.interactable = false;
+            }
+        }
+
+        RefreshDisks();
+    }
 
 
     public void RefreshDisks()
