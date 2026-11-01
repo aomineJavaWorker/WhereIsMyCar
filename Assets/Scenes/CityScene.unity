@@ -1591,7 +1591,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f280c90dbfee05041b03f78e9ca0d7fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _AndroidAdUnitId: Banner_Android
+  _AndroidAdUnitId: BP_Banner_Android
   _bannerButton: {fileID: 0}
   bannerPosition: 4
   retryDelaySeconds: 10
