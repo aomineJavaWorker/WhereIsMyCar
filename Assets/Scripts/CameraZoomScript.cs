@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
+using Mouse = UnityEngine.InputSystem.Mouse;
 using UnityEngine.UI;
 
 public class CameraZoomScript : MonoBehaviour
@@ -45,6 +45,7 @@ public class CameraZoomScript : MonoBehaviour
     private GameManager gameManager;
     private float configuredMinZoom;
     private int lastWidth, lastHeight;
+    private int lastWheelFrame = -1;
 
     private void Awake()
     {
@@ -117,6 +118,7 @@ public class CameraZoomScript : MonoBehaviour
 
     private void HandleMouseWheel()
     {
+        if (lastWheelFrame == Time.frameCount) return;
         // First try the legacy input (keeps the original desktop wheel speed).
         float scroll = Input.GetAxis("Mouse ScrollWheel");
 
@@ -139,28 +141,77 @@ public class CameraZoomScript : MonoBehaviour
         // Only one source is used per frame so zoom is never applied twice.
         if (Mathf.Abs(scroll) < 0.0001f)
             return;
-
+        lastWheelFrame = Time.frameCount;
         StopZoomReset();
         mainCamera.orthographicSize -= scroll * mouseScroolSpeed;
     }
 
     // A visible fallback on phones and Android emulators where two-finger touch is unavailable.
+
     private void OnGUI()
     {
-        if (!showZoomButtons || mainCamera == null || !enabled ||
-            GameObjectsScript.isDragging || ObjectTransformationScript.isTransforming ||
-            (gameManager != null && gameManager.GameEnded)) return;
+        if (mainCamera == null || !enabled)
+            return;
 
-        float size = Mathf.Clamp(Screen.height * 0.09f, 48f, 90f);
-        float margin = Mathf.Max(12f, Screen.width * 0.025f);
+        // Не показываем кнопки поверх полноэкранной рекламы
+        if (AdManager.Instance != null &&
+            AdManager.Instance.bannerAd != null &&
+            AdManager.Instance.bannerAd.IsFullscreenAdActive)
+            return;
+
+        if (GameObjectsScript.isDragging ||
+            ObjectTransformationScript.isTransforming ||
+            (gameManager != null && gameManager.GameEnded))
+            return;
+
+        // Дополнительная обработка колёсика мыши
+        if (Event.current.type == EventType.ScrollWheel &&
+            lastWheelFrame != Time.frameCount)
+        {
+            lastWheelFrame = Time.frameCount;
+
+            float delta = Event.current.delta.y;
+
+            StopZoomReset();
+            UpdateMaxZoom();
+
+            mainCamera.orthographicSize = Mathf.Clamp(
+                mainCamera.orthographicSize +
+                delta * mouseScroolSpeed * 0.1f,
+                minZoom,
+                maxZoom
+            );
+
+            ClampCamera();
+            Event.current.Use();
+        }
+
+        if (!showZoomButtons)
+            return;
+
+        float size = Mathf.Clamp(
+            Screen.height * 0.09f, 48f, 90f
+        );
+
+        float margin = Mathf.Max(
+            12f, Screen.width * 0.025f
+        );
+
         float x = Screen.width - size - margin;
         float y = Screen.height * 0.34f;
+
         GUIStyle style = new GUIStyle(GUI.skin.button);
         style.fontSize = Mathf.RoundToInt(size * 0.48f);
         style.fontStyle = FontStyle.Bold;
-        if (GUI.Button(new Rect(x, y, size, size), "+", style)) ChangeZoom(-1);
-        if (GUI.Button(new Rect(x, y + size + 10f, size, size), "-", style)) ChangeZoom(1);
+
+        if (GUI.Button(new Rect(x, y, size, size), "+", style))
+            ChangeZoom(-1);
+
+        if (GUI.Button(
+            new Rect(x, y + size + 10f, size, size), "-", style))
+            ChangeZoom(1);
     }
+
 
     private void ChangeZoom(int direction)
     {
