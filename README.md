@@ -35,6 +35,34 @@ Each vehicle has its own matching place. To place a vehicle successfully, the pl
 
 ---
 
+## 🧩 Hanojas Tornis (Tower of Hanoi)
+
+The project also includes **Hanojas Tornis**, a separate puzzle game accessible from the main menu.
+
+### How to play
+
+Choose a difficulty of **4, 5 or 6 disks**. Move the whole stack from the first rod to the third rod by dragging one disk at a time. Only the top disk can be moved, and a larger disk cannot be placed on a smaller one.
+
+- Drag a disk with the mouse or touchscreen to another rod.
+- The move counter and timer track your progress.
+- The victory screen displays your moves, time and a star rating.
+- **Restart** resets the puzzle; **Main Menu** returns to the game selection screen.
+- An optional **rewarded ad**, started by the player, unlocks a bonus holder for one disk.
+
+The minimum number of moves is **15**, **31** or **63**, depending on the chosen difficulty.
+
+### Screenshots
+
+Real gameplay screenshots of the Hanoi scene still need to be captured in Unity and added here. Suggested screenshots: difficulty selection, moving the disks, and victory screen.
+
+<!-- When screenshots have been captured, save them as:
+docs/images/hanojas-difficulty.png
+docs/images/hanojas-gameplay.png
+docs/images/hanojas-victory.png
+and replace this comment with Markdown image links. -->
+
+---
+
 ## 🕹️ Controls
 
 | Control | Action |
@@ -47,6 +75,7 @@ Each vehicle has its own matching place. To place a vehicle successfully, the pl
 | Space | Flip vehicle horizontally |
 | Mouse movement | Move camera |
 | Mouse Wheel | Zoom camera |
+| On-screen + / - | Zoom on Android phones and emulators |
 
 ---
 
@@ -59,7 +88,9 @@ Each vehicle has its own matching place. To place a vehicle successfully, the pl
 - Horizontal vehicle flipping
 - Tag-based vehicle validation
 - Individual spawn position for every vehicle
-- Camera movement and zoom
+- Camera movement and zoom (mouse wheel, pinch, and on-screen buttons)
+- Tower of Hanoi puzzle with three difficulty levels
+- Unity Ads: automatic banner ads, interstitial ads, and player-initiated rewarded ads
 - Sound effects
 - Background music
 - Animated main menu
@@ -109,7 +140,9 @@ The menu includes:
 - hover sound effects;
 - background music;
 - animated Police and Robber vehicles;
-- additional decorative traffic.
+- additional decorative traffic;
+- **HANOJAS TORNIS** game selection;
+- automatic banner ads.
 
 The title uses a subtle looping scale animation to make the menu feel more alive.
 
@@ -137,8 +170,11 @@ Assets/
 ├── animation/
 ├── Scenes/
 │   ├── MainMenu.unity
-│   └── CityScene.unity
+│   ├── CityScene.unity
+│   └── HanojasTornis.unity
 ├── Scripts/
 ├── Sounds/
 ├── Sprites/
 └── ...
+
+```
