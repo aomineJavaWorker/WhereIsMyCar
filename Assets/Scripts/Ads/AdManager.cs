@@ -109,6 +109,13 @@ public class AdManager : MonoBehaviour
         // survives scene changes. Rebind only the buttons that actually exist.
         BindSceneButtons();
 
+        // Main menu displays only the banner, never an automatic fullscreen ad.
+        if (scene.name == "MainMenu")
+        {
+            interstitialPendingForScene = false;
+            return;
+        }
+
         if (turnOffInterstitialAds || interstitialAd == null)
             return;
 
