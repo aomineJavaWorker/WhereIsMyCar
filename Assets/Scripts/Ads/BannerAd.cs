@@ -5,8 +5,8 @@ using UnityEngine.Advertisements;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Place this on the existing AdsScriptHolder in CityScene.
-// Automatically displays a banner on game levels, but never over fullscreen ads.
+// Attach to the persistent AdsScriptHolder, including the MainMenu scene.
+// Automatically displays banners in the menu and levels, but not over fullscreen ads.
 public class BannerAd : MonoBehaviour
 {
     // Keep these serialized field names: they are already configured in CityScene.
@@ -35,6 +35,9 @@ public class BannerAd : MonoBehaviour
 
     private bool CanShow => _isGameplayScene && !_manualHidden && !IsFullscreenAdActive;
 
+    private static bool IsBannerScene(string name) =>
+        name == "MainMenu" || name == "CityScene" || name == "HanojasTornis";
+
     private void Awake()
     {
         // AdsScriptHolder is recreated when the level is loaded again.
@@ -47,7 +50,7 @@ public class BannerAd : MonoBehaviour
         }
         _instance = this;
         _adUnitId = _AndroidAdUnitId;
-        _isGameplayScene = SceneManager.GetActiveScene().name == "CityScene" || SceneManager.GetActiveScene().name == "HanojasTornis";
+        _isGameplayScene = IsBannerScene(SceneManager.GetActiveScene().name);
         Advertisement.Banner.SetPosition(bannerPosition);
     }
 
@@ -72,7 +75,7 @@ public class BannerAd : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        _isGameplayScene = scene.name == "CityScene" || scene.name == "HanojasTornis";
+        _isGameplayScene = IsBannerScene(scene.name);
         if (!_isGameplayScene)
         {
             HideNativeBanner();
