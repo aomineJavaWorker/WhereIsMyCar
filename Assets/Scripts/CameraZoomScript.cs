@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class CameraZoomScript : MonoBehaviour
@@ -94,17 +95,16 @@ public class CameraZoomScript : MonoBehaviour
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         HandleTouch();
-        // Android emulators can forward mouse wheel and hardware keyboard input.
-        if (Input.touchCount == 0) HandleMouseWheel();
 #else
         if (Input.touchCount > 0)
             HandleTouch();
         else
-        {
             DesktopFollowCursor();
-            HandleMouseWheel();
-        }
 #endif
+        // Read the wheel on all platforms, even when Android emulates a mouse as
+        // a single touch. Do not apply wheel zoom during a two-finger pinch.
+        if (Input.touchCount < 2)
+            HandleMouseWheel();
         // Keyboard zoom works on desktop and with a keyboard attached to an emulator.
         if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
             ChangeZoom(-1);
@@ -117,8 +117,29 @@ public class CameraZoomScript : MonoBehaviour
 
     private void HandleMouseWheel()
     {
+        // First try the legacy input (keeps the original desktop wheel speed).
         float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (Mathf.Abs(scroll) <= Mathf.Epsilon) return;
+
+        if (Mathf.Abs(scroll) < 0.0001f)
+            scroll = Input.mouseScrollDelta.y * 0.1f;
+
+        // Some Android emulators forward wheel events only to the new Input
+        // System. Its scroll value is usually in pixels (120 per wheel step),
+        // whereas the legacy "Mouse ScrollWheel" axis is around 0.1 per step.
+        if (Mathf.Abs(scroll) < 0.0001f && Mouse.current != null)
+        {
+            float wheel = Mouse.current.scroll.ReadValue().y;
+            if (Mathf.Abs(wheel) > 0.001f)
+            {
+                float steps = Mathf.Clamp(Mathf.Abs(wheel) / 120f, 0.25f, 3f);
+                scroll = Mathf.Sign(wheel) * steps * 0.1f;
+            }
+        }
+
+        // Only one source is used per frame so zoom is never applied twice.
+        if (Mathf.Abs(scroll) < 0.0001f)
+            return;
+
         StopZoomReset();
         mainCamera.orthographicSize -= scroll * mouseScroolSpeed;
     }
