@@ -55,11 +55,27 @@ The minimum number of moves is **15**, **31** or **63**, depending on the chosen
 
 Real gameplay screenshots of the Hanoi scene still need to be captured in Unity and added here. Suggested screenshots: difficulty selection, moving the disks, and victory screen.
 
-<!-- When screenshots have been captured, save them as:
-docs/images/hanojas-difficulty.png
-docs/images/hanojas-gameplay.png
-docs/images/hanojas-victory.png
-and replace this comment with Markdown image links. -->
+
+### Screenshots
+
+#### Difficulty selection
+
+Choose between 4, 5 or 6 disks.
+
+![Hanoi difficulty selection](docs/images/hanojas-difficulty.png)
+
+#### Gameplay
+
+Move disks between three rods without placing a larger disk on a smaller one.
+
+![Hanoi gameplay](docs/images/hanojas-gameplay.png)
+
+#### Victory
+
+Complete the puzzle to see your moves, time and star rating.
+
+![Hanoi victory screen](docs/images/hanojas-victory.png)
+
 
 ---
 
