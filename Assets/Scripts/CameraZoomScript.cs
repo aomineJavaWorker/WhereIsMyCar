@@ -13,6 +13,10 @@ public class CameraZoomScript : MonoBehaviour
     public float pinchZoomSpeed = 0.9f;
     public float mouseScroolSpeed = 150f;
 
+    [Header("Emulator / on-screen zoom buttons")]
+    [SerializeField] private bool showZoomButtons = true;
+    [SerializeField, Range(0.02f, 0.5f)] private float zoomButtonStep = 0.15f;
+
     [Header("Pan")]
     public float mouseFollowSpeed = 1f;
     public float touchPanSpeed = 1f;
@@ -90,22 +94,60 @@ public class CameraZoomScript : MonoBehaviour
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         HandleTouch();
+        // Android emulators can forward mouse wheel and hardware keyboard input.
+        if (Input.touchCount == 0) HandleMouseWheel();
 #else
         if (Input.touchCount > 0)
             HandleTouch();
         else
         {
             DesktopFollowCursor();
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > Mathf.Epsilon)
-            {
-                StopZoomReset();
-                mainCamera.orthographicSize -= scroll * mouseScroolSpeed;
-            }
+            HandleMouseWheel();
         }
 #endif
+        // Keyboard zoom works on desktop and with a keyboard attached to an emulator.
+        if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus))
+            ChangeZoom(-1);
+        if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))
+            ChangeZoom(1);
         UpdateMaxZoom();
         mainCamera.orthographicSize = Mathf.Clamp(mainCamera.orthographicSize, minZoom, maxZoom);
+        ClampCamera();
+    }
+
+    private void HandleMouseWheel()
+    {
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (Mathf.Abs(scroll) <= Mathf.Epsilon) return;
+        StopZoomReset();
+        mainCamera.orthographicSize -= scroll * mouseScroolSpeed;
+    }
+
+    // A visible fallback on phones and Android emulators where two-finger touch is unavailable.
+    private void OnGUI()
+    {
+        if (!showZoomButtons || mainCamera == null || !enabled ||
+            GameObjectsScript.isDragging || ObjectTransformationScript.isTransforming ||
+            (gameManager != null && gameManager.GameEnded)) return;
+
+        float size = Mathf.Clamp(Screen.height * 0.09f, 48f, 90f);
+        float margin = Mathf.Max(12f, Screen.width * 0.025f);
+        float x = Screen.width - size - margin;
+        float y = Screen.height * 0.34f;
+        GUIStyle style = new GUIStyle(GUI.skin.button);
+        style.fontSize = Mathf.RoundToInt(size * 0.48f);
+        style.fontStyle = FontStyle.Bold;
+        if (GUI.Button(new Rect(x, y, size, size), "+", style)) ChangeZoom(-1);
+        if (GUI.Button(new Rect(x, y + size + 10f, size, size), "-", style)) ChangeZoom(1);
+    }
+
+    private void ChangeZoom(int direction)
+    {
+        StopZoomReset();
+        UpdateMaxZoom();
+        float factor = direction < 0 ? (1f - zoomButtonStep) : (1f + zoomButtonStep);
+        mainCamera.orthographicSize =
+            Mathf.Clamp(mainCamera.orthographicSize * factor, minZoom, maxZoom);
         ClampCamera();
     }
 
